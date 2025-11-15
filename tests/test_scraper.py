@@ -403,6 +403,13 @@ class TestScrapeAllSources:
 class TestExtractQuotesFromParade:
     """Tests for Parade.com quote extraction."""
 
+    def test_extract_quotes_from_parade_error(self):
+        """Test error handling in Parade.com extraction."""
+        # Malformed HTML that will cause parsing error
+        content = None  # This will cause an exception
+        quotes = extract_quotes_from_parade(content, "test_source")
+        assert quotes == []
+
     def test_extract_quotes_from_parade_success(self):
         """Test successful extraction from Parade.com HTML."""
         html = """
@@ -428,6 +435,12 @@ class TestExtractQuotesFromParade:
 class TestExtractQuotesFromThefactsite:
     """Tests for Thefactsite.com quote extraction."""
 
+    def test_extract_quotes_from_thefactsite_error(self):
+        """Test error handling in Thefactsite.com extraction."""
+        content = None  # This will cause an exception
+        quotes = extract_quotes_from_thefactsite(content, "test_source")
+        assert quotes == []
+
     def test_extract_quotes_from_thefactsite_success(self):
         """Test successful extraction from Thefactsite.com HTML."""
         html = """
@@ -446,6 +459,12 @@ class TestExtractQuotesFromThefactsite:
 class TestExtractQuotesFromChucknorrisfactsFr:
     """Tests for Chucknorrisfacts.fr quote extraction."""
 
+    def test_extract_quotes_from_chucknorrisfacts_fr_error(self):
+        """Test error handling in Chucknorrisfacts.fr extraction."""
+        content = None  # This will cause an exception
+        quotes = extract_quotes_from_chucknorrisfacts_fr(content, "test_source")
+        assert quotes == []
+
     def test_extract_quotes_from_chucknorrisfacts_fr_success(self):
         """Test successful extraction from Chucknorrisfacts.fr HTML."""
         html = """
@@ -461,6 +480,12 @@ class TestExtractQuotesFromChucknorrisfactsFr:
 
 class TestExtractQuotesFromFactinate:
     """Tests for Factinate.com quote extraction."""
+
+    def test_extract_quotes_from_factinate_error(self):
+        """Test error handling in Factinate.com extraction."""
+        content = None  # This will cause an exception
+        quotes = extract_quotes_from_factinate(content, "test_source")
+        assert quotes == []
 
     def test_extract_quotes_from_factinate_success(self):
         """Test successful extraction from Factinate.com HTML."""

@@ -87,25 +87,26 @@ class TestValidateDatabase:
         with caplog.at_level(logging.ERROR):
             result = validate_database(str(db_path))
         assert result is False
-        assert any("Database file not found" in record.message for record in caplog.records)
+        assert any(
+            "Database file not found" in record.message for record in caplog.records
+        )
 
     def test_validate_database_empty(self, tmp_path):
         """Test validation of empty database."""
         db_path = tmp_path / "empty.db"
-        conn = sqlite3.connect(str(db_path))
-        cursor = conn.cursor()
-        cursor.execute(
+        with sqlite3.connect(str(db_path)) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                CREATE TABLE quotes (
+                    id INTEGER PRIMARY KEY,
+                    quote TEXT NOT NULL,
+                    source TEXT,
+                    created_at TIMESTAMP
+                )
             """
-            CREATE TABLE quotes (
-                id INTEGER PRIMARY KEY,
-                quote TEXT NOT NULL,
-                source TEXT,
-                created_at TIMESTAMP
             )
-        """
-        )
-        conn.commit()
-        conn.close()
+            conn.commit()
 
         assert validate_database(str(db_path)) is False
 
@@ -132,20 +133,19 @@ class TestGetAllQuoteIds:
     def test_get_all_quote_ids_empty_database(self, tmp_path):
         """Test retrieving IDs from empty database."""
         db_path = tmp_path / "empty.db"
-        conn = sqlite3.connect(str(db_path))
-        cursor = conn.cursor()
-        cursor.execute(
+        with sqlite3.connect(str(db_path)) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                CREATE TABLE quotes (
+                    id INTEGER PRIMARY KEY,
+                    quote TEXT,
+                    source TEXT,
+                    created_at TIMESTAMP
+                )
             """
-            CREATE TABLE quotes (
-                id INTEGER PRIMARY KEY,
-                quote TEXT,
-                source TEXT,
-                created_at TIMESTAMP
             )
-        """
-        )
-        conn.commit()
-        conn.close()
+            conn.commit()
 
         ids = get_all_quote_ids(str(db_path))
         assert ids == []
@@ -222,32 +222,39 @@ class TestGenerateQuotes:
     def test_generate_quotes_empty_database(self, tmp_path):
         """Test generating from empty database."""
         db_path = tmp_path / "empty.db"
-        conn = sqlite3.connect(str(db_path))
-        cursor = conn.cursor()
-        cursor.execute(
+        with sqlite3.connect(str(db_path)) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                CREATE TABLE quotes (
+                    id INTEGER PRIMARY KEY,
+                    quote TEXT,
+                    source TEXT,
+                    created_at TIMESTAMP
+                )
             """
-            CREATE TABLE quotes (
-                id INTEGER PRIMARY KEY,
-                quote TEXT,
-                source TEXT,
-                created_at TIMESTAMP
             )
-        """
-        )
-        conn.commit()
-        conn.close()
+            conn.commit()
 
         quotes = generate_quotes(str(db_path), count=5)
         assert quotes == []
 
-    @patch('quotes.generator.get_quote_by_id')
-    def test_generate_quotes_with_missing_quote(self, mock_get_quote, temp_db_with_quotes):
+    @patch("quotes.generator.get_quote_by_id")
+    def test_generate_quotes_with_missing_quote(
+        self, mock_get_quote, temp_db_with_quotes
+    ):
         """Test generating quotes when some quotes are missing from DB."""
+
         # Mock get_quote_by_id to return None for id 2
         def mock_get(db_path, id):
             if id == 2:
                 return None
-            return {"id": id, "quote": f"Quote {id}", "source": "test", "created_at": "now"}
+            return {
+                "id": id,
+                "quote": f"Quote {id}",
+                "source": "test",
+                "created_at": "now",
+            }
 
         mock_get_quote.side_effect = mock_get
 

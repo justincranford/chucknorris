@@ -448,7 +448,9 @@ def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
             except sqlite3.IntegrityError:
                 # Duplicate quote
                 duplicate_count += 1
-                logging.debug(f"Skipping duplicate quote: {quote_data['quote'][:50]}...")
+                logging.debug(
+                    f"Skipping duplicate quote: {quote_data['quote'][:50]}..."
+                )
 
         conn.commit()
 
