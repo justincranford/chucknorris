@@ -23,6 +23,50 @@ from bs4 import BeautifulSoup
 # Constants
 DEFAULT_OUTPUT_DB = "download/quotes.db"
 DEFAULT_OUTPUT_CSV = "download/quotes.csv"
+SOURCES_FILE = "sources.txt"
+
+
+def load_sources() -> List[str]:
+    """Load sources from the sources.txt file.
+
+    Returns:
+        List of source URLs (excluding commented lines).
+    """
+    sources = []
+    try:
+        with open(SOURCES_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    sources.append(line)
+    except FileNotFoundError:
+        logging.warning(f"Sources file {SOURCES_FILE} not found, using empty list")
+    return sources
+
+
+def comment_out_source(url: str, reason: str) -> None:
+    """Comment out a source URL in the sources.txt file.
+
+    Args:
+        url: The URL to comment out.
+        reason: The reason for commenting out.
+    """
+    try:
+        with open(SOURCES_FILE, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        
+        with open(SOURCES_FILE, "w", encoding="utf-8") as f:
+            for line in lines:
+                line_stripped = line.strip()
+                if line_stripped == url:
+                    f.write(f"# [{reason}] {url}\n")
+                else:
+                    f.write(line)
+    except Exception as e:
+        logging.error(f"Failed to comment out source {url}: {e}")
+
+
+# Legacy DEFAULT_SOURCES - kept for backward compatibility but not used
 DEFAULT_SOURCES = [
     "https://api.chucknorris.io/jokes/random",
     "https://api.chucknorris.io/jokes/search?query=all",
@@ -257,6 +301,16 @@ def fetch_url(url: str, retries: int = MAX_RETRIES) -> Optional[str]:
             response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
             return response.text
+        except requests.exceptions.HTTPError as e:
+            if e.response and e.response.status_code == 404:
+                logging.warning(f"URL {url} returned 404 Not Found, commenting out in sources file")
+                comment_out_source(url, "HTTP 404")
+            logging.warning(f"Error fetching {url}: {e}")
+            if attempt < retries - 1:
+                time.sleep(RETRY_DELAY)
+            else:
+                logging.error(f"Failed to fetch {url} after {retries} attempts")
+                return None
         except requests.exceptions.RequestException as e:
             logging.warning(f"Error fetching {url}: {e}")
             if attempt < retries - 1:
@@ -592,7 +646,6 @@ def save_quotes_to_csv(quotes: List[Dict[str, str]], csv_path: str) -> int:
         return 0
 
     import csv
-    from datetime import datetime
 
     # Check if file exists to determine if we need headers
     file_exists = Path(csv_path).exists()
@@ -814,7 +867,7 @@ def main() -> int:
     logging.info("Chuck Norris Quote Scraper started")
 
     # Use default sources if none provided
-    sources = args.sources if args.sources else DEFAULT_SOURCES
+    sources = args.sources if args.sources else load_sources()
     sources = validate_sources(sources)
 
     if not sources:
