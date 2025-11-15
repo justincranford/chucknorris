@@ -8,6 +8,7 @@ formats including JSON, HTML, and CSV.
 import argparse
 import json
 import logging
+import re
 import sqlite3
 import sys
 import time
@@ -22,6 +23,10 @@ DEFAULT_OUTPUT_DB = "download/quotes.db"
 DEFAULT_SOURCES = [
     "https://api.chucknorris.io/jokes/random",
     "https://api.chucknorris.io/jokes/search?query=all",
+    "https://parade.com/970343/parade/chuck-norris-jokes/",
+    "https://www.thefactsite.com/top-100-chuck-norris-facts/",
+    "https://www.chucknorrisfacts.fr/en/top-100-chuck-norris-facts",
+    "https://www.factinate.com/quote/chuck-norris-jokes/",
     # "https://api.icndb.com/jokes/random",  # NOTE: This is essentially the same as source 1 - commented out
     # "https://www.rd.com/list/chuck-norris-jokes/",  # DEAD LINK - marked for removal - commented out
 ]
@@ -187,8 +192,175 @@ def extract_quotes_from_html(content: str, source: str) -> List[Dict[str, str]]:
     return quotes
 
 
+def extract_quotes_from_parade(content: str, source: str) -> List[Dict[str, str]]:
+    """Extract quotes from Parade.com Chuck Norris jokes page.
+
+    Args:
+        content: HTML content from Parade.com.
+        source: Source URL for attribution.
+
+    Returns:
+        List of quote dictionaries.
+    """
+    quotes = []
+    try:
+        soup = BeautifulSoup(content, "lxml")
+
+        # Parade.com uses various containers for jokes
+        # Try different selectors
+        selectors = [
+            "div.article-body p",  # Article paragraphs
+            "p",  # All paragraphs
+            "li",  # List items
+            "[class*='joke']",  # Elements with joke in class
+            "[class*='fact']",  # Elements with fact in class
+        ]
+
+        for selector in selectors:
+            elements = soup.select(selector)
+            for elem in elements:
+                text = elem.get_text(strip=True)
+                if (text and len(text) > 20 and len(text) < 500 and
+                    "chuck norris" in text.lower()):
+                    quotes.append({"quote": text, "source": source})
+
+        # Remove duplicates
+        seen = set()
+        unique_quotes = []
+        for quote in quotes:
+            if quote["quote"] not in seen:
+                unique_quotes.append(quote)
+                seen.add(quote["quote"])
+
+        logging.debug(f"Extracted {len(unique_quotes)} quotes from Parade.com")
+        return unique_quotes
+
+    except Exception as e:
+        logging.error(f"Failed to parse Parade.com: {e}")
+        return []
+
+
+def extract_quotes_from_thefactsite(content: str, source: str) -> List[Dict[str, str]]:
+    """Extract quotes from Thefactsite.com top 100 Chuck Norris facts.
+
+    Args:
+        content: HTML content from Thefactsite.com.
+        source: Source URL for attribution.
+
+    Returns:
+        List of quote dictionaries.
+    """
+    quotes = []
+    try:
+        soup = BeautifulSoup(content, "lxml")
+
+        # Thefactsite uses numbered lists for facts
+        selectors = [
+            "ol li",  # Ordered list items
+            "ul li",  # Unordered list items
+            "p",  # Paragraphs
+            "[class*='fact']",  # Fact containers
+        ]
+
+        for selector in selectors:
+            elements = soup.select(selector)
+            for elem in elements:
+                text = elem.get_text(strip=True)
+                # Remove numbering like "1. " or "1) "
+                text = re.sub(r'^\d+\.?\s*', '', text)
+                if (text and len(text) > 20 and len(text) < 500 and
+                    "chuck norris" in text.lower()):
+                    quotes.append({"quote": text, "source": source})
+
+        logging.debug(f"Extracted {len(quotes)} quotes from Thefactsite.com")
+        return quotes
+
+    except Exception as e:
+        logging.error(f"Failed to parse Thefactsite.com: {e}")
+        return []
+
+
+def extract_quotes_from_chucknorrisfacts_fr(content: str, source: str) -> List[Dict[str, str]]:
+    """Extract quotes from Chucknorrisfacts.fr.
+
+    Args:
+        content: HTML content from Chucknorrisfacts.fr.
+        source: Source URL for attribution.
+
+    Returns:
+        List of quote dictionaries.
+    """
+    quotes = []
+    try:
+        soup = BeautifulSoup(content, "lxml")
+
+        # French site structure
+        selectors = [
+            "div.fact",  # Fact divs
+            "p",  # Paragraphs
+            "li",  # List items
+            "[class*='fact']",  # Fact containers
+        ]
+
+        for selector in selectors:
+            elements = soup.select(selector)
+            for elem in elements:
+                text = elem.get_text(strip=True)
+                # Handle French numbering/removal
+                text = re.sub(r'^\d+\.?\s*', '', text)
+                if (text and len(text) > 20 and len(text) < 500 and
+                    "chuck norris" in text.lower()):
+                    quotes.append({"quote": text, "source": source})
+
+        logging.debug(f"Extracted {len(quotes)} quotes from Chucknorrisfacts.fr")
+        return quotes
+
+    except Exception as e:
+        logging.error(f"Failed to parse Chucknorrisfacts.fr: {e}")
+        return []
+
+
+def extract_quotes_from_factinate(content: str, source: str) -> List[Dict[str, str]]:
+    """Extract quotes from Factinate.com Chuck Norris jokes.
+
+    Args:
+        content: HTML content from Factinate.com.
+        source: Source URL for attribution.
+
+    Returns:
+        List of quote dictionaries.
+    """
+    quotes = []
+    try:
+        soup = BeautifulSoup(content, "lxml")
+
+        # Factinate uses various quote containers
+        selectors = [
+            "blockquote",  # Blockquotes
+            "div.quote",  # Quote divs
+            "p",  # Paragraphs
+            "[class*='quote']",  # Quote elements
+            "[class*='joke']",  # Joke elements
+        ]
+
+        for selector in selectors:
+            elements = soup.select(selector)
+            for elem in elements:
+                text = elem.get_text(strip=True)
+                if (text and len(text) > 20 and len(text) < 500 and
+                    "chuck norris" in text.lower()):
+                    quotes.append({"quote": text, "source": source})
+
+        logging.debug(f"Extracted {len(quotes)} quotes from Factinate.com")
+        return quotes
+
+    except Exception as e:
+        logging.error(f"Failed to parse Factinate.com: {e}")
+        return []
+
+
 def extract_quotes(content: str, source: str, content_type: str = "auto") -> List[Dict[str, str]]:
-    """Extract quotes from content based on type detection.
+    """Extract quotes from content based on type detection and source routing.
 
     Args:
         content: The content to parse.
@@ -209,7 +381,18 @@ def extract_quotes(content: str, source: str, content_type: str = "auto") -> Lis
     if content_type == "json":
         return extract_quotes_from_json(content, source)
     else:
-        return extract_quotes_from_html(content, source)
+        # Route HTML content to site-specific extractors
+        if "parade.com" in source:
+            return extract_quotes_from_parade(content, source)
+        elif "thefactsite.com" in source:
+            return extract_quotes_from_thefactsite(content, source)
+        elif "chucknorrisfacts.fr" in source:
+            return extract_quotes_from_chucknorrisfacts_fr(content, source)
+        elif "factinate.com" in source:
+            return extract_quotes_from_factinate(content, source)
+        else:
+            # Fallback to generic HTML extraction
+            return extract_quotes_from_html(content, source)
 
 
 def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:

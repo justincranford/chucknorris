@@ -12,8 +12,12 @@ import requests
 from download.scraper import (
     create_database,
     extract_quotes,
+    extract_quotes_from_chucknorrisfacts_fr,
+    extract_quotes_from_factinate,
     extract_quotes_from_html,
     extract_quotes_from_json,
+    extract_quotes_from_parade,
+    extract_quotes_from_thefactsite,
     fetch_url,
     save_quotes_to_db,
     scrape_all_sources,
@@ -381,3 +385,104 @@ class TestScrapeAllSources:
         total = scrape_all_sources([], temp_db)
         assert total == 0
         mock_scrape.assert_not_called()
+
+
+class TestExtractQuotesFromParade:
+    """Tests for Parade.com quote extraction."""
+
+    def test_extract_quotes_from_parade_success(self):
+        """Test successful extraction from Parade.com HTML."""
+        html = """
+        <div class="article-body">
+            <p>Chuck Norris can divide by zero. This is an amazing feat.</p>
+            <p>Another Chuck Norris fact here.</p>
+        </div>
+        """
+        source = "https://parade.com/970343/parade/chuck-norris-jokes/"
+        quotes = extract_quotes_from_parade(html, source)
+        assert len(quotes) == 2
+        assert all("Chuck Norris" in quote["quote"] for quote in quotes)
+        assert all(quote["source"] == source for quote in quotes)
+
+    def test_extract_quotes_from_parade_no_quotes(self):
+        """Test extraction with no valid quotes."""
+        html = "<p>This is just regular text.</p>"
+        source = "https://parade.com/970343/parade/chuck-norris-jokes/"
+        quotes = extract_quotes_from_parade(html, source)
+        assert quotes == []
+
+
+class TestExtractQuotesFromThefactsite:
+    """Tests for Thefactsite.com quote extraction."""
+
+    def test_extract_quotes_from_thefactsite_success(self):
+        """Test successful extraction from Thefactsite.com HTML."""
+        html = """
+        <ol>
+            <li>1. Chuck Norris can count to infinity. Twice.</li>
+            <li>2. Another Chuck Norris amazing fact.</li>
+        </ol>
+        """
+        source = "https://www.thefactsite.com/top-100-chuck-norris-facts/"
+        quotes = extract_quotes_from_thefactsite(html, source)
+        assert len(quotes) == 2
+        assert all("Chuck Norris" in quote["quote"] for quote in quotes)
+        assert not any(quote["quote"].startswith(("1. ", "2. ")) for quote in quotes)
+
+
+class TestExtractQuotesFromChucknorrisfactsFr:
+    """Tests for Chucknorrisfacts.fr quote extraction."""
+
+    def test_extract_quotes_from_chucknorrisfacts_fr_success(self):
+        """Test successful extraction from Chucknorrisfacts.fr HTML."""
+        html = """
+        <div class="fact">Chuck Norris can speak French fluently. In French.</div>
+        <p>Another Chuck Norris fact in French.</p>
+        """
+        source = "https://www.chucknorrisfacts.fr/en/top-100-chuck-norris-facts"
+        quotes = extract_quotes_from_chucknorrisfacts_fr(html, source)
+        # Should extract from both div.fact and p
+        assert len(quotes) >= 2
+        assert all("Chuck Norris" in quote["quote"] for quote in quotes)
+
+
+class TestExtractQuotesFromFactinate:
+    """Tests for Factinate.com quote extraction."""
+
+    def test_extract_quotes_from_factinate_success(self):
+        """Test successful extraction from Factinate.com HTML."""
+        html = """
+        <blockquote>Chuck Norris can make a hormone. This is a fact.</blockquote>
+        <div class="quote">Another Chuck Norris quote here.</div>
+        """
+        source = "https://www.factinate.com/quote/chuck-norris-jokes/"
+        quotes = extract_quotes_from_factinate(html, source)
+        # Should extract from both blockquote and div.quote
+        assert len(quotes) >= 2
+        assert all("Chuck Norris" in quote["quote"] for quote in quotes)
+
+
+class TestExtractQuotesRouting:
+    """Tests for extract_quotes routing to site-specific functions."""
+
+    def test_extract_quotes_routes_to_parade(self):
+        """Test that extract_quotes routes Parade.com to specific function."""
+        html = '<p>Chuck Norris can do anything. Even HTML parsing.</p>'
+        source = "https://parade.com/970343/parade/chuck-norris-jokes/"
+        quotes = extract_quotes(html, source, "html")
+        assert len(quotes) >= 1
+        assert quotes[0]["source"] == source
+
+    def test_extract_quotes_routes_to_thefactsite(self):
+        """Test routing to Thefactsite.com function."""
+        html = '<ol><li>Chuck Norris fact from the site.</li></ol>'
+        source = "https://www.thefactsite.com/top-100-chuck-norris-facts/"
+        quotes = extract_quotes(html, source, "html")
+        assert len(quotes) >= 1
+
+    def test_extract_quotes_routes_to_fallback(self):
+        """Test routing to generic HTML extraction for unknown sites."""
+        html = '<p>Chuck Norris from unknown site.</p>'
+        source = "https://unknown-site.com/quotes"
+        quotes = extract_quotes(html, source, "html")
+        assert len(quotes) >= 1
