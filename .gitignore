@@ -1,32 +1,35 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# C extensions
-*.so
+# Binaries
+**/bin/
+**/build/
+**/lib/
+**/lib64/
+**/dist/
+**/downloads/
+**/*.exe
+**/*.exe~
+**/*.dll
+**/*.so
+**/*.dylib
 
 # Distribution / packaging
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+**/develop-eggs/
+**/eggs/
+**/.eggs/
+**/*.egg
+**/*.egg-info/
+**/parts/
+**/sdist/
+**/var/
+**/wheels/
+**/.installed.cfg
 
 # PyInstaller
 *.manifest
 *.spec
+__pycache__/
+*.py[cod]
+*$py.class
 
 # Unit test / coverage reports
 htmlcov/
@@ -44,29 +47,20 @@ coverage.lcov
 .pytest_cache/
 
 # Virtual environments
-venv/
-ENV/
-env/
-.venv
+**/venv/
+**/.venv
+**/env/
+**/.env
+**/ENV/
 
 # IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+**/*.swp
+**/*.swo
+**/*~
 
 # OS
-.DS_Store
-Thumbs.db
-
-# Project specific
-**/*.db
-**/*.sqlite
-**/*.sqlite3
+**/.DS_Store
+**/Thumbs.db
 
 # Logs
-*.log
-
-# Environment variables
-.env
+**/*.log
