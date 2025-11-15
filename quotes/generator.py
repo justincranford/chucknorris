@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Chuck Norris Quote Generator.
 
 This module provides functionality to generate random Chuck Norris quotes

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Chuck Norris Quote Scraper.
 
 This module provides functionality to scrape Chuck Norris quotes from various
@@ -12,6 +13,7 @@ import re
 import sqlite3
 import sys
 import time
+from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
@@ -538,6 +540,47 @@ def extract_quotes(
             return extract_quotes_from_html(content, source)
 
 
+def save_quotes_to_csv(quotes: List[Dict[str, str]], csv_path: str) -> int:
+    """Save quotes to a CSV file.
+
+    Args:
+        quotes: List of quote dictionaries.
+        csv_path: Path to the CSV file.
+
+    Returns:
+        Number of quotes successfully saved.
+    """
+    if not quotes:
+        logging.warning("No quotes to save")
+        return 0
+
+    import csv
+    from datetime import datetime
+
+    # Check if file exists to determine if we need headers
+    file_exists = Path(csv_path).exists()
+
+    with open(csv_path, "a", newline="", encoding="utf-8") as csvfile:
+        fieldnames = ["created_at", "source", "quote"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        # Write header only if file is new
+        if not file_exists:
+            writer.writeheader()
+
+        saved_count = 0
+        for quote_data in quotes:
+            writer.writerow({
+                "created_at": datetime.now().isoformat(),
+                "source": quote_data["source"],
+                "quote": quote_data["quote"]
+            })
+            saved_count += 1
+
+    logging.info(f"Saved {saved_count} quotes to CSV file: {csv_path}")
+    return saved_count
+
+
 def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
     """Save quotes to the SQLite database.
 
@@ -580,12 +623,13 @@ def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
     return saved_count
 
 
-def scrape_source(source_url: str, db_path: str) -> int:
+def scrape_source(source_url: str, output_path: str, format_type: str = "sqlite") -> int:
     """Scrape quotes from a single source.
 
     Args:
         source_url: URL of the source to scrape.
-        db_path: Path to the SQLite database file.
+        output_path: Path to the output file (database or CSV).
+        format_type: Output format ("sqlite" or "csv").
 
     Returns:
         Number of quotes successfully scraped and saved.
@@ -603,16 +647,20 @@ def scrape_source(source_url: str, db_path: str) -> int:
         logging.warning(f"No quotes found at {source_url}")
         return 0
 
-    saved = save_quotes_to_db(quotes, db_path)
+    if format_type == "csv":
+        saved = save_quotes_to_csv(quotes, output_path)
+    else:
+        saved = save_quotes_to_db(quotes, output_path)
     return saved
 
 
-def scrape_all_sources(sources: List[str], db_path: str) -> int:
+def scrape_all_sources(sources: List[str], output_path: str, format_type: str = "sqlite") -> int:
     """Scrape quotes from all provided sources.
 
     Args:
         sources: List of source URLs.
-        db_path: Path to the SQLite database file.
+        output_path: Path to the output file (database or CSV).
+        format_type: Output format ("sqlite" or "csv").
 
     Returns:
         Total number of quotes successfully scraped and saved.
@@ -621,7 +669,7 @@ def scrape_all_sources(sources: List[str], db_path: str) -> int:
 
     for source in sources:
         try:
-            saved = scrape_source(source, db_path)
+            saved = scrape_source(source, output_path, format_type)
             total_saved += saved
         except Exception as e:
             logging.error(f"Error scraping {source}: {e}")
@@ -689,14 +737,14 @@ Examples:
         "-o",
         "--output",
         default=DEFAULT_OUTPUT_DB,
-        help=f"Output database file path (default: {DEFAULT_OUTPUT_DB})",
+        help=f"Output file path (database for sqlite format, CSV for csv format) (default: {DEFAULT_OUTPUT_DB})",
     )
 
     parser.add_argument(
         "-f",
         "--format",
         default="sqlite",
-        choices=["sqlite"],
+        choices=["sqlite", "csv"],
         help="Output format (default: sqlite)",
     )
 
@@ -729,11 +777,12 @@ def main() -> int:
         logging.error("No valid sources provided")
         return 1
 
-    # Create database
-    create_database(args.output)
+    # Create database only for SQLite format
+    if args.format == "sqlite":
+        create_database(args.output)
 
     # Scrape quotes
-    total_saved = scrape_all_sources(sources, args.output)
+    total_saved = scrape_all_sources(sources, args.output, args.format)
 
     logging.info(f"Scraping completed. Total quotes saved: {total_saved}")
 
