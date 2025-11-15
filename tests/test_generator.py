@@ -245,9 +245,9 @@ class TestGenerateQuotes:
             if id == 2:
                 return None
             return {"id": id, "quote": f"Quote {id}", "source": "test", "created_at": "now"}
-        
+
         mock_get_quote.side_effect = mock_get
-        
+
         quotes = generate_quotes(temp_db_with_quotes, count=3)
         # Should skip the missing quote and generate others
         assert len(quotes) == 2  # Only 2 out of 3
