@@ -1,10 +1,49 @@
 {
     "$schema": "vscode://schemas/settings/user",
+    // VS Code Copilot Customization Instructions
+    // https://code.visualstudio.com/docs/copilot/customization/custom-instructions
+    "github.copilot.enable": {
+        "markdown": true
+    }, // Enable Copilot for markdown
     "github.copilot.chat.codeGeneration.useInstructionFiles": true,
-    "python.terminal.activateEnvironment": true,
-    "python.terminal.activateEnvInCurrentTerminal": true,
-    "python.defaultInterpreterPath": "python3",
-    "python.terminal.launchArgs": [],
+    "github.copilot.chat.generateTests.codeLens": true, // Enable test generation code lens (experimental)
+    "github.copilot.chat.editor.temporalContext.enabled": true, // Enable temporal context in editor (experimental)
+    "github.copilot.nextEditSuggestions.enabled": true, // Enable next edit suggestions (experimental)
+    "chat.agentSessionsViewLocation": "view", // Agent sessions view location (experimental)
+    "chat.agent.maxRequests": 1000, // Maximum agent requests
+    "chat.math.enabled": true, // Enable math expressions in chat (experimental)
+    "chat.fontSize": 14, // Increase GitHub Copilot Chat font size for non-code text
+    "chat.editor.fontSize": 14, // Increase GitHub Copilot Chat font size for code text
+    "workbench.secondarySideBar.defaultVisibility": "visible", // Default visibility of secondary sidebar
+
+    // Git Settings
+    "git.enableSmartCommit": true, // Commit button is only enabled when you have staged changes
+    "git.confirmSync": false, // Confirm git sync operations
+    "git.openRepositoryInParentFolders": "always", // Open git repository in parent folders
+
+    // GitLens Settings
+    "gitlens.ai.model": "vscode", // GitLens AI model provider (experimental)
+    "gitlens.ai.vscode.model": "copilot:gpt-4.1", // GitLens VS Code AI model (experimental)
+
+    // VS Code Terminal Settings
+    // https://code.visualstudio.com/docs/terminal/profiles
+    "terminal.integrated.fontSize": 15, // Increase terminal font size
+    "terminal.integrated.defaultProfile.windows": "PowerShell", // Set PowerShell as default terminal profile
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "args": ["-NoLogo", "-ExecutionPolicy", "RemoteSigned"]
+        }
+    }, // Configure PowerShell terminal to suppress banner and set execution policy
+
+    // Diff Editor Settings
+    "diffEditor.ignoreTrimWhitespace": true, // Ignore trimmed whitespace in diff
+    "diffEditor.hideUnchangedRegions.enabled": false, // Hide unchanged regions in diff
+
+    // VS Code Files Settings
+    // https://code.visualstudio.com/docs/getstarted/settings
+    "files.encoding": "utf8", // File encoding to use
+    "files.trimTrailingWhitespace": true, // Trim trailing whitespace on save
     "files.associations": {
         "*.py": "python"
     },
@@ -16,7 +55,22 @@
         "**/.coverage*": true,
         "**/coverage.*": true,
         "**/.mypy_cache": true,
-        "**/.pytest_cache": true
+        "**/.pytest_cache": true,
+        // System/OS files
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        // Temporary files
+        "**/*.log": true,
+        "**/*.tmp": true,
+        "**/*.swp": true,
+        "**/*.swo": true,
+        // Build artifacts
+        "**/bin": true,
+        "**/*.exe": true,
+        "**/*.exe~": true,
+        "**/*.dll": true,
+        "**/*.so": true,
+        "**/*.dylib": true,
     },
     "search.exclude": {
         "**/__pycache__": true,
@@ -36,5 +90,93 @@
         "**/coverage.*": true,
         "**/.mypy_cache": true,
         "**/.pytest_cache": true
-    }
+    },
+
+    // Markdown Settings
+    // https://code.visualstudio.com/docs/languages/markdown
+    "markdown.preview.scrollEditorWithPreview": true, // Sync scroll between editor and preview
+    "markdown.preview.openMarkdownLinks": "inPreview", // How to open links in markdown files
+    "markdown.validate.enabled": true, // Enable markdown validation
+    "markdown.updateLinksOnFileMove.enabled": "prompt", // Update links when files are moved
+    "markdown.math.enabled": true, // Enable math expressions in markdown (experimental)
+    "markdown.validate.fragmentLinks.enabled": "warning", // Validate fragment links in markdown
+    "markdown.validate.fileLinks.enabled": "warning", // Validate file links in markdown
+
+    // YAML Schema Validation
+    // https://code.visualstudio.com/docs/languages/yaml
+    "yaml.schemas": {
+        "https://json.schemastore.org/github-workflow.json": [ ".github/workflows/*.{yml,yaml}" ],
+        "https://json.schemastore.org/github-action.json": [ ".github/actions/**/*.{yml,yaml}", "**/action.{yml,yaml}" ],
+        "https://json.schemastore.org/pre-commit-config.json": [ ".pre-commit-config.{yml,yaml}" ]
+    },
+    "yaml.validate": true, // Enable YAML validation
+    "yaml.format.enable": true, // Enable YAML formatting
+    "yaml.format.singleQuote": false, // Use double quotes in YAML
+    "yaml.format.bracketSpacing": true, // Add spaces inside brackets
+    "yaml.format.proseWrap": "preserve", // Preserve prose wrapping
+
+    // JSON Schema Validation
+    // https://code.visualstudio.com/docs/languages/json
+    "json.schemas": [
+        { "fileMatch": ["pyproject.toml"], "url": "https://json.schemastore.org/pyproject.toml" },
+        { "fileMatch": ["dependabot.yml", "dependabot.yaml"], "url": "https://json.schemastore.org/dependabot.json" }
+    ],
+
+    // VS Code Editor Settings
+    // https://code.visualstudio.com/docs/getstarted/settings
+    "editor.aiStats.enabled": true, // Enable AI-powered statistics in editor (experimental)
+    "editor.rulers": [80, 120, 160, 200], // Show vertical rulers at specified columns
+    "editor.minimap.enabled": false, // Show minimap in editor
+    "explorer.confirmDragAndDrop": false, // Confirm drag and drop operations
+    "explorer.confirmDelete": false, // Confirm delete operations
+    "terminal.integrated.enableMultiLinePasteWarning": "never", // Enable multi-line paste warning
+    "terminal.integrated.scrollback": 100000, // Terminal scrollback buffer size
+    "workbench.editor.empty.hint": "hidden", // Show hint when no editor is open
+
+    // VS Code Chat Settings
+    // https://code.visualstudio.com/docs/copilot/chat/copilot-chat
+    "chat.tools.terminal.autoApprove": {
+        "/^git (push|pull|reset|rebase).*/": false,
+        "/^docker compose (exec).*/": false,
+        "/^docker container exec.*/": false,
+        "/^docker (run|exec).*/": false,
+        "/^(rm|Remove-Item|del)\\b/i.*/": false,
+        "/^(code|pre-commit|golangci-lint|gofumpt|goimports|gremlins|act|cspell).*/": true,
+        "/^git (status|add|log|reflog|diff|branch|worktree|checkout|merge|stash|stash pop|stash list|fetch|mv|commit|rev-parse|restore|describe).*/": true,
+        "/^(python|python3|pip|pip3|pytest|codecov|black|isort|flake8|mypy|sphinx-build)\\b.*/": true,
+        "/^docker compose (up|down|logs|ps|build|pull|start|stop|restart|config).*/": true,
+        "/^docker container (create|start|stop|restart|rm|logs|inspect|stats|top|update|scale|rollback|prune).*/": true,
+        "/^docker service (create|inspect|logs|ls|ps|rm|rollback|scale|update).*/": true,
+        "/^docker (image|images) (ls|inspect|rm|prune|history|pull|push|build|import|load|save|tag).*/": true,
+        "/^docker volume (ls|inspect|create|rm|prune).*/": true,
+        "/^docker network (ls|inspect|create|rm|prune|connect|disconnect).*/": true,
+        "/^docker context (ls|inspect|create|update|export|import|rm|show|use).*/": true,
+        "/^docker plugin (ls|inspect|create|update|disable|enable|install|push|rm|set|upgrade).*/": true,
+        "/^docker secret (ls|inspect|create|update|rm).*/": true,
+        "/^docker config (ls|inspect|create|update|rm).*/": true,
+        "/^docker stack (config|deploy|ls|ps|rm|services).*/": true,
+        "/^docker system (df|info|prune).*/": true,
+        "/^docker pull.*/": true,
+        "/^docker build.*/": true,
+        "/^docker tag.*/": true,
+        "/^docker inspect.*/": true,
+        "/^docker version.*/": true,
+        "/^docker info.*/": true,
+        "/^docker search.*/": true,
+        "/^docker stop.*/": true,
+        "/^docker kill.*/": true,
+        "/^docker rm.*/": true,
+        "/^docker rmi.*/": true,
+        "/^(ls|which|find|grep|sed|awk|cat|netstat|head|tail|wc|sort|uniq|cut|tr|ps|df|du|tar|gzip|gunzip|less|file|id)\\b.*/": true, // Linux
+        "/^(dir|where|findstr|type|tasklist|systeminfo|hostname|tree|fc|more|attrib|mode)\\b.*/": true, // Windows
+        "/^(openssl|jq|yq|curl|wget|mkdir|tee|make|cmake|ninja|ssh|scp|perl)\\b.*/": true, // Cross-platform
+        "/^(Get-Command|Get-Help|Get-ChildItem|Get-Process|Test-Path|Copy-Item|Get-Content|Invoke-WebRequest|Receive-Job|Get-Job|Start-Job|Stop-Job|Get-Service|Get-Alias)\\b.*/": true // PowerShell
+    }, // Auto-approve terminal commands - Patterns ordered for precedence: false first, then true
+
+    // Python Extension Settings
+    // https://code.visualstudio.com/docs/python/settings-reference
+    "python.terminal.activateEnvironment": true, // Re-enable auto-activation for venv
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.defaultInterpreterPath": "python3",
+    "python.terminal.launchArgs": []
 }
