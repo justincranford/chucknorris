@@ -25,23 +25,23 @@ jobs:
 
     - name: Lint with flake8
       run: |
-        flake8 download quotes --max-line-length=88 --extend-ignore=E203,W503,E501
+        flake8 scraper quotes --max-line-length=88 --extend-ignore=E203,W503,E501
 
     - name: Check formatting with black
       run: |
-        black --check download quotes tests
+        black --check scraper quotes tests
 
     - name: Check import sorting with isort
       run: |
-        isort --check-only --profile black download quotes tests
+        isort --check-only --profile black scraper quotes tests
 
     - name: Type check with mypy
       run: |
-        mypy download quotes --ignore-missing-imports
+        mypy scraper quotes --ignore-missing-imports
 
     - name: Run tests with pytest
       run: |
-        pytest --cov=download --cov=quotes --cov-report=term-missing --cov-report=xml --cov-report=html --cov-report=json --cov-report=lcov --cov-fail-under=95
+        pytest --cov=scraper --cov=quotes --cov-report=term-missing --cov-report=xml --cov-report=html --cov-report=json --cov-report=lcov --cov-fail-under=95
 
     - name: Upload coverage artifacts
       uses: actions/upload-artifact@v4

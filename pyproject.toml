@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+requires = ["setuptools>=75.1.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,7 @@ name = "chucknorris-quotes"
 version = "1.0.0"
 description = "A Python project to scrape and generate Chuck Norris quotes"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.14"
 authors = [
     {name = "Chuck Norris Quotes Team"}
 ]
@@ -16,11 +16,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 
 dependencies = [
@@ -37,14 +33,14 @@ dev = [
     "black>=24.10.0",
     "flake8>=7.1.0",
     "isort>=5.13.2",
-    "mypy>=1.11.2",
+    "mypy>=1.13.0",
     "pre-commit>=4.0.1",
     "types-requests>=2.32.0",
 ]
 
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py314']
 include = '\.pyi?$'
 
 [tool.isort]
@@ -53,7 +49,7 @@ line_length = 88
 multi_line_output = 3
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.14"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
@@ -64,7 +60,7 @@ minversion = "7.0"
 addopts = [
     "-ra",
     "--strict-markers",
-    "--cov=download",
+    "--cov=scraper",
     "--cov=quotes",
     "--cov-report=term-missing",
     "--cov-report=html",
@@ -75,7 +71,7 @@ pythonpath = ["."]
 
 [tool.coverage.run]
 branch = true
-source = ["download", "quotes"]
+source = ["scraper", "quotes"]
 omit = [
     "*/tests/*",
     "*/test_*.py",

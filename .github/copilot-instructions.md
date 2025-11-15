@@ -129,11 +129,17 @@ This is a Python project for scraping and generating Chuck Norris quotes. The pr
 - terminal_selection: instead of manual selection, do not use in terminal
 
 ## Preferred Libraries
-- requests: HTTP requests
-- beautifulsoup4: HTML parsing
+- requests>=2.32.3: HTTP requests
+- beautifulsoup4>=4.12.3: HTML parsing
+- lxml>=5.3.0: XML/HTML parser
 - sqlite3: Database operations (standard library)
 - argparse: CLI argument parsing (standard library)
 - logging: Logging (standard library)
-- pytest: Testing framework
-- pytest-cov: Coverage reporting
-- pytest-mock: Mocking utilities
+- pytest>=8.3.3: Testing framework
+- pytest-cov>=5.0.0: Coverage reporting
+- pytest-mock>=3.14.0: Mocking utilities
+- black>=24.10.0: Code formatting
+- isort>=5.13.2: Import sorting
+- mypy>=1.13.0: Type checking
+- flake8>=7.1.0: Linting
+- pre-commit>=4.0.1: Git hooks
