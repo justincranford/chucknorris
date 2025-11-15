@@ -239,7 +239,7 @@ def extract_quotes_from_json(content: str, source: str) -> List[Dict[str, str]]:
     Returns:
         List of quote dictionaries with 'quote' and 'source' keys.
     """
-    quotes = []
+    quotes: List[Dict[str, str]] = []
     try:
         data = json.loads(content)
 
@@ -252,17 +252,17 @@ def extract_quotes_from_json(content: str, source: str) -> List[Dict[str, str]]:
                 quotes.append({"quote": data["joke"], "source": source})
             elif "result" in data and isinstance(data["result"], list):
                 # Search results
-                for item in data["result"]:
+                for item in data["result"]:  # type: ignore
                     if "value" in item:
-                        quotes.append({"quote": item["value"], "source": source})
+                        quotes.append({"quote": item["value"], "source": source})  # type: ignore
         elif isinstance(data, list):
             # List of quotes
-            for item in data:
+            for item in data:  # type: ignore
                 if isinstance(item, dict):
                     if "value" in item:
-                        quotes.append({"quote": item["value"], "source": source})
+                        quotes.append({"quote": item["value"], "source": source})  # type: ignore
                     elif "joke" in item:
-                        quotes.append({"quote": item["joke"], "source": source})
+                        quotes.append({"quote": item["joke"], "source": source})  # type: ignore
                 elif isinstance(item, str):
                     quotes.append({"quote": item, "source": source})
 
@@ -283,7 +283,7 @@ def extract_quotes_from_html(content: str, source: str) -> List[Dict[str, str]]:
     Returns:
         List of quote dictionaries with 'quote' and 'source' keys.
     """
-    quotes = []
+    quotes: List[Dict[str, str]] = []
     try:
         soup = BeautifulSoup(content, "lxml")
 
@@ -295,7 +295,7 @@ def extract_quotes_from_html(content: str, source: str) -> List[Dict[str, str]]:
                 quotes.append({"quote": quote_text, "source": source})
 
         # Pattern 2: Elements with class containing 'quote'
-        for elem in soup.find_all(class_=lambda x: x and "quote" in x.lower()):
+        for elem in soup.select('[class*="quote"]'):
             quote_text = elem.get_text(strip=True)
             if quote_text and len(quote_text) > 10:  # Filter out short snippets
                 quotes.append({"quote": quote_text, "source": source})
@@ -325,7 +325,7 @@ def extract_quotes_from_parade(content: str, source: str) -> List[Dict[str, str]
     Returns:
         List of quote dictionaries.
     """
-    quotes = []
+    quotes: List[Dict[str, str]] = []
     try:
         soup = BeautifulSoup(content, "lxml")
 
@@ -352,8 +352,8 @@ def extract_quotes_from_parade(content: str, source: str) -> List[Dict[str, str]
                     quotes.append({"quote": text, "source": source})
 
         # Remove duplicates
-        seen = set()
-        unique_quotes = []
+        seen: set[str] = set()
+        unique_quotes: List[Dict[str, str]] = []
         for quote in quotes:
             if quote["quote"] not in seen:
                 unique_quotes.append(quote)
@@ -377,7 +377,7 @@ def extract_quotes_from_thefactsite(content: str, source: str) -> List[Dict[str,
     Returns:
         List of quote dictionaries.
     """
-    quotes = []
+    quotes: List[Dict[str, str]] = []
     try:
         soup = BeautifulSoup(content, "lxml")
 
@@ -423,7 +423,7 @@ def extract_quotes_from_chucknorrisfacts_fr(
     Returns:
         List of quote dictionaries.
     """
-    quotes = []
+    quotes: List[Dict[str, str]] = []
     try:
         soup = BeautifulSoup(content, "lxml")
 
@@ -467,7 +467,7 @@ def extract_quotes_from_factinate(content: str, source: str) -> List[Dict[str, s
     Returns:
         List of quote dictionaries.
     """
-    quotes = []
+    quotes: List[Dict[str, str]] = []
     try:
         soup = BeautifulSoup(content, "lxml")
 
@@ -638,7 +638,7 @@ def validate_sources(sources: List[str]) -> List[str]:
     Returns:
         List of valid URLs.
     """
-    valid_sources = []
+    valid_sources: List[str] = []
 
     for source in sources:
         try:
