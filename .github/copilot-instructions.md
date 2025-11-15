@@ -13,8 +13,8 @@ This is a Python project for scraping and generating Chuck Norris quotes. The pr
 - Write comprehensive docstrings (Google style)
 
 ### Testing Requirements
-- Maintain minimum 95% code coverage
 - Write parameterized tests for both happy and sad paths
+- Maintain minimum 95% code coverage
 - Use pytest fixtures for reusable test components
 - Mock external dependencies (network calls, file I/O)
 - Test edge cases and error conditions
@@ -48,6 +48,30 @@ This is a Python project for scraping and generating Chuck Norris quotes. The pr
 - Implement streaming for large outputs
 - Provide reproducible randomness with seeds
 - Handle edge cases (empty database, invalid counts)
+
+## Data Integrity Requirements
+- THERE MUST NOT be any duplicates in sources.txt
+- THERE MUST NOT be any duplicates in quotes.db
+- THERE MUST NOT be any duplicates in quotes.csv
+- Deduplication must be enforced at all levels (source loading, quote extraction, database insertion, CSV export)
+- Sources must be validated for uniqueness before processing
+- Quotes must be checked for uniqueness before storage
+
+### Scraper CLI Parameters
+- `-s, --sources`: List of URLs or sources to scrape (space-separated)
+- `-o, --output`: Output file path base (default: scraper/quotes.db)
+- `-f, --format`: Output format - sqlite, csv, or both (default: both)
+- `-v, --verbose`: Enable verbose logging
+- `-d, --dry-run, --dryrun`: Validate sources and simulate scraping without network calls
+- `-t, --threads, --thread`: Number of concurrent threads for parallel processing (default: 4)
+
+### Generator CLI Parameters
+- `-c, --count`: Number of quotes to generate (default: 1, max: 10,000,000)
+- `-s, --seed`: Random seed for reproducible output (default: None for truly random)
+- `-o, --output`: Output file path (default: stdout)
+- `-f, --format`: Output format - text, json, or csv (default: text)
+- `-d, --database`: Path to the quotes database (default: scraper/quotes.db)
+- `-v, --verbose`: Enable verbose logging
 
 ## When Making Changes
 1. Ensure all existing tests still pass

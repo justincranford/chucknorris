@@ -35,6 +35,8 @@ class TestParseArguments:
             assert args.format == "both"
             assert args.verbose is False
             assert args.sources is None
+            assert args.dry_run is False
+            assert args.threads == 4
 
     def test_parse_arguments_with_sources(self):
         """Test parsing with custom sources."""
@@ -68,6 +70,34 @@ class TestParseArguments:
             assert args.output == "out.db"
             assert args.verbose is True
 
+    def test_parse_arguments_dry_run(self):
+        """Test dry-run flag parsing."""
+        with patch("sys.argv", ["scraper.py", "--dry-run"]):
+            args = parse_arguments()
+            assert args.dry_run is True
+
+        with patch("sys.argv", ["scraper.py", "--dryrun"]):
+            args = parse_arguments()
+            assert args.dry_run is True
+
+        with patch("sys.argv", ["scraper.py", "-d"]):
+            args = parse_arguments()
+            assert args.dry_run is True
+
+    def test_parse_arguments_threads(self):
+        """Test threads parameter parsing."""
+        with patch("sys.argv", ["scraper.py", "--threads", "8"]):
+            args = parse_arguments()
+            assert args.threads == 8
+
+        with patch("sys.argv", ["scraper.py", "--thread", "2"]):
+            args = parse_arguments()
+            assert args.threads == 2
+
+        with patch("sys.argv", ["scraper.py", "-t", "1"]):
+            args = parse_arguments()
+            assert args.threads == 1
+
 
 class TestMain:
     """Tests for main function."""
@@ -82,6 +112,8 @@ class TestMain:
         mock_args.sources = None
         mock_args.output = "test.db"
         mock_args.verbose = False
+        mock_args.dry_run = False
+        mock_args.threads = 4
         mock_parse.return_value = mock_args
 
         mock_validate.return_value = ["https://example.com"]
@@ -102,6 +134,8 @@ class TestMain:
         mock_args.sources = ["invalid"]
         mock_args.output = "test.db"
         mock_args.verbose = False
+        mock_args.dry_run = False
+        mock_args.threads = 4
         mock_parse.return_value = mock_args
 
         mock_validate.return_value = []
@@ -121,6 +155,8 @@ class TestMain:
         mock_args.sources = None
         mock_args.output = "test.db"
         mock_args.verbose = False
+        mock_args.dry_run = False
+        mock_args.threads = 4
         mock_parse.return_value = mock_args
 
         mock_validate.return_value = ["https://example.com"]
@@ -142,6 +178,8 @@ class TestMain:
         mock_args.sources = None
         mock_args.output = "test.db"
         mock_args.verbose = False
+        mock_args.dry_run = False
+        mock_args.threads = 4
         mock_parse.return_value = mock_args
 
         mock_load.return_value = ["https://api.chucknorris.io/jokes/random"]
@@ -154,3 +192,52 @@ class TestMain:
         mock_validate.assert_called_once()
         call_args = mock_validate.call_args[0][0]
         assert "https://api.chucknorris.io/jokes/random" in call_args
+
+    @patch("scraper.scraper.validate_sources")
+    @patch("scraper.scraper.load_sources")
+    @patch("scraper.scraper.parse_arguments")
+    def test_main_dry_run(self, mock_parse, mock_load, mock_validate):
+        """Test main function in dry-run mode."""
+        mock_args = MagicMock()
+        mock_args.sources = None
+        mock_args.dry_run = True
+        mock_args.verbose = False
+        mock_parse.return_value = mock_args
+
+        mock_load.return_value = ["https://api.chucknorris.io/jokes/random", "https://example.com"]
+        mock_validate.return_value = ["https://api.chucknorris.io/jokes/random", "https://example.com"]
+
+        with patch("scraper.scraper.logging.info") as mock_log:
+            result = main()
+            assert result == 0
+
+            # Verify dry-run logging
+            log_calls = [call.args[0] for call in mock_log.call_args_list]
+            assert "DRY RUN MODE: Validating sources and simulating scraping" in log_calls
+            assert "Found 2 valid sources to scrape:" in log_calls
+            assert "Dry run completed. No network calls were made." in log_calls
+
+    @patch("scraper.scraper.scrape_all_sources")
+    @patch("scraper.scraper.create_database")
+    @patch("scraper.scraper.validate_sources")
+    @patch("scraper.scraper.parse_arguments")
+    def test_main_with_threading(self, mock_parse, mock_validate, mock_create, mock_scrape):
+        """Test main function with custom thread count."""
+        mock_args = MagicMock()
+        mock_args.sources = None
+        mock_args.output = "test.db"
+        mock_args.verbose = False
+        mock_args.dry_run = False
+        mock_args.threads = 8
+        mock_parse.return_value = mock_args
+
+        mock_validate.return_value = ["https://example.com"]
+        mock_scrape.return_value = 10
+
+        result = main()
+        assert result == 0
+
+        # Verify scrape_all_sources was called with correct thread count
+        mock_scrape.assert_called_once()
+        call_args = mock_scrape.call_args
+        assert call_args[1]['max_workers'] == 8

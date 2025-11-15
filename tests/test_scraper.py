@@ -543,6 +543,44 @@ class TestScrapeAllSources:
         assert total == 0
         mock_scrape.assert_not_called()
 
+    @patch("scraper.scraper.scrape_source")
+    def test_scrape_all_sources_single_thread(self, mock_scrape, temp_db):
+        """Test scraping with single thread (max_workers=1)."""
+        mock_scrape.return_value = 3
+        sources = ["https://example1.com", "https://example2.com"]
+        total = scrape_all_sources(sources, temp_db, None, ["sqlite"], max_workers=1)
+        assert total == 6
+        assert mock_scrape.call_count == 2
+
+    @patch("concurrent.futures.ThreadPoolExecutor")
+    @patch("concurrent.futures.as_completed")
+    @patch("scraper.scraper.scrape_source")
+    def test_scrape_all_sources_multi_thread(self, mock_scrape, mock_as_completed, mock_executor, temp_db):
+        """Test scraping with multiple threads."""
+        mock_scrape.return_value = 4
+        sources = ["https://example1.com", "https://example2.com", "https://example3.com"]
+
+        # Mock the executor context manager
+        mock_executor_instance = MagicMock()
+        mock_executor.return_value.__enter__.return_value = mock_executor_instance
+
+        # Mock futures
+        mock_future1 = MagicMock()
+        mock_future1.result.return_value = 4
+        mock_future2 = MagicMock()
+        mock_future2.result.return_value = 4
+        mock_future3 = MagicMock()
+        mock_future3.result.return_value = 4
+
+        mock_executor_instance.submit.side_effect = [mock_future1, mock_future2, mock_future3]
+
+        # Mock as_completed to return futures in order
+        mock_as_completed.return_value = [mock_future1, mock_future2, mock_future3]
+
+        total = scrape_all_sources(sources, temp_db, None, ["sqlite"], max_workers=3)
+        assert total == 12
+        mock_executor.assert_called_once_with(max_workers=3)
+
 
 class TestExtractQuotesFromParade:
     """Tests for Parade.com quote extraction."""
@@ -725,7 +763,7 @@ class TestFetchUrlEdgeCases:
         http_error = requests.exceptions.HTTPError("404 Client Error: Not Found")
         http_error.response = Mock()
         http_error.response.status_code = 404
-        
+
         # Make requests.get raise the HTTPError
         mock_get.side_effect = http_error
 

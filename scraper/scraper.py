@@ -7,6 +7,7 @@ formats including JSON, HTML, and CSV.
 """
 
 import argparse
+import concurrent.futures
 import json
 import logging
 import re
@@ -750,7 +751,7 @@ def scrape_source(source_url: str, db_path: Optional[str], csv_path: Optional[st
     return total_saved
 
 
-def scrape_all_sources(sources: List[str], db_path: Optional[str], csv_path: Optional[str], formats: List[str]) -> int:
+def scrape_all_sources(sources: List[str], db_path: Optional[str], csv_path: Optional[str], formats: List[str], max_workers: int = 4) -> int:
     """Scrape quotes from all provided sources.
 
     Args:
@@ -758,18 +759,40 @@ def scrape_all_sources(sources: List[str], db_path: Optional[str], csv_path: Opt
         db_path: Path to the SQLite database file (None if not saving to DB).
         csv_path: Path to the CSV file (None if not saving to CSV).
         formats: List of output formats.
+        max_workers: Maximum number of concurrent threads.
 
     Returns:
         Total number of quotes successfully scraped and saved.
     """
     total_saved = 0
 
-    for source in sources:
-        try:
-            saved = scrape_source(source, db_path, csv_path, formats)
-            total_saved += saved
-        except Exception as e:
-            logging.error(f"Error scraping {source}: {e}")
+    if max_workers == 1:
+        # Single-threaded processing for debugging or when threading is disabled
+        for source in sources:
+            try:
+                saved = scrape_source(source, db_path, csv_path, formats)
+                total_saved += saved
+            except Exception as e:
+                logging.error(f"Error scraping {source}: {e}")
+    else:
+        # Multi-threaded processing
+        logging.info(f"Using {max_workers} threads for parallel processing")
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all scraping tasks
+            future_to_source = {
+                executor.submit(scrape_source, source, db_path, csv_path, formats): source
+                for source in sources
+            }
+
+            # Collect results as they complete
+            for future in concurrent.futures.as_completed(future_to_source):
+                source = future_to_source[future]
+                try:
+                    saved = future.result()
+                    total_saved += saved
+                except Exception as e:
+                    logging.error(f"Error scraping {source}: {e}")
 
     return total_saved
 
@@ -820,6 +843,12 @@ Examples:
 
   # Scrape from specific sources
   python scraper.py --sources https://api.chucknorris.io/jokes/random
+
+  # Dry run to validate sources without scraping
+  python scraper.py --dry-run
+
+  # Use 8 threads for parallel processing
+  python scraper.py --threads 8
         """,
     )
 
@@ -852,6 +881,23 @@ Examples:
         help="Enable verbose logging",
     )
 
+    parser.add_argument(
+        "-d",
+        "--dry-run",
+        "--dryrun",
+        action="store_true",
+        help="Validate sources and simulate scraping without network calls",
+    )
+
+    parser.add_argument(
+        "-t",
+        "--threads",
+        "--thread",
+        type=int,
+        default=4,
+        help="Number of concurrent threads for parallel processing (default: 4)",
+    )
+
     return parser.parse_args()
 
 
@@ -874,6 +920,15 @@ def main() -> int:
         logging.error("No valid sources provided")
         return 1
 
+    # Handle dry-run mode
+    if args.dry_run:
+        logging.info("DRY RUN MODE: Validating sources and simulating scraping")
+        logging.info(f"Found {len(sources)} valid sources to scrape:")
+        for i, source in enumerate(sources, 1):
+            logging.info(f"  {i}. {source}")
+        logging.info("Dry run completed. No network calls were made.")
+        return 0
+
     # Determine output formats and paths
     if args.format == "both":
         formats = ["sqlite", "csv"]
@@ -892,8 +947,8 @@ def main() -> int:
     if "sqlite" in formats and db_path:
         create_database(db_path)
 
-    # Scrape quotes
-    total_saved = scrape_all_sources(sources, db_path, csv_path, formats)
+    # Scrape quotes with threading
+    total_saved = scrape_all_sources(sources, db_path, csv_path, formats, max_workers=args.threads)
 
     logging.info(f"Scraping completed. Total quotes saved: {total_saved}")
 
