@@ -659,12 +659,13 @@ def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
     return saved_count
 
 
-def scrape_source(source_url: str, output_path: str, formats: List[str]) -> int:
+def scrape_source(source_url: str, db_path: Optional[str], csv_path: Optional[str], formats: List[str]) -> int:
     """Scrape quotes from a single source.
 
     Args:
         source_url: URL of the source to scrape.
-        output_path: Path to the output file base.
+        db_path: Path to the SQLite database file (None if not saving to DB).
+        csv_path: Path to the CSV file (None if not saving to CSV).
         formats: List of output formats ("sqlite" and/or "csv").
 
     Returns:
@@ -685,23 +686,24 @@ def scrape_source(source_url: str, output_path: str, formats: List[str]) -> int:
 
     total_saved = 0
     for fmt in formats:
-        if fmt == "csv":
-            saved = save_quotes_to_csv(quotes, f"{output_path}.csv")
-        elif fmt == "sqlite":
-            saved = save_quotes_to_db(quotes, f"{output_path}.db")
+        if fmt == "csv" and csv_path:
+            saved = save_quotes_to_csv(quotes, csv_path)
+        elif fmt == "sqlite" and db_path:
+            saved = save_quotes_to_db(quotes, db_path)
         else:
-            logging.warning(f"Unknown format: {fmt}")
+            logging.warning(f"Unknown format or missing path: {fmt}")
             saved = 0
         total_saved += saved
     return total_saved
 
 
-def scrape_all_sources(sources: List[str], output_path: str, formats: List[str]) -> int:
+def scrape_all_sources(sources: List[str], db_path: Optional[str], csv_path: Optional[str], formats: List[str]) -> int:
     """Scrape quotes from all provided sources.
 
     Args:
         sources: List of source URLs.
-        output_path: Path to the output file base.
+        db_path: Path to the SQLite database file (None if not saving to DB).
+        csv_path: Path to the CSV file (None if not saving to CSV).
         formats: List of output formats.
 
     Returns:
@@ -711,7 +713,7 @@ def scrape_all_sources(sources: List[str], output_path: str, formats: List[str])
 
     for source in sources:
         try:
-            saved = scrape_source(source, output_path, formats)
+            saved = scrape_source(source, db_path, csv_path, formats)
             total_saved += saved
         except Exception as e:
             logging.error(f"Error scraping {source}: {e}")
@@ -819,22 +821,26 @@ def main() -> int:
         logging.error("No valid sources provided")
         return 1
 
-    # Determine output formats
+    # Determine output formats and paths
     if args.format == "both":
         formats = ["sqlite", "csv"]
-        # Use base path without any extension
-        output_base = args.output.split('.')[0]
-    else:
-        formats = [args.format]
-        output_base = args.output.split('.')[0]
+        db_path = DEFAULT_OUTPUT_DB
+        csv_path = DEFAULT_OUTPUT_CSV
+    elif args.format == "sqlite":
+        formats = ["sqlite"]
+        db_path = args.output if args.output != DEFAULT_OUTPUT_DB else DEFAULT_OUTPUT_DB
+        csv_path = None
+    else:  # csv
+        formats = ["csv"]
+        db_path = None
+        csv_path = args.output if args.output != DEFAULT_OUTPUT_DB else DEFAULT_OUTPUT_CSV
 
     # Create database only if SQLite format is included
-    if "sqlite" in formats:
-        db_path = f"{output_base}.db"
+    if "sqlite" in formats and db_path:
         create_database(db_path)
 
     # Scrape quotes
-    total_saved = scrape_all_sources(sources, output_base, formats)
+    total_saved = scrape_all_sources(sources, db_path, csv_path, formats)
 
     logging.info(f"Scraping completed. Total quotes saved: {total_saved}")
 
