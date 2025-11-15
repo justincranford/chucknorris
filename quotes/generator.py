@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, TextIO
 
 # Constants
-DEFAULT_DATABASE = "download/quotes.db"
+DEFAULT_DATABASE = "scraper/quotes.db"
 DEFAULT_COUNT = 1
 MAX_COUNT = 10_000_000
 DEFAULT_FORMAT = "text"
@@ -100,7 +100,7 @@ def get_quote_by_id(db_path: str, quote_id: int) -> Optional[Dict[str, Any]]:
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT id, quote, source, created_at FROM quotes WHERE id = ?",
+            "SELECT id, quote, source FROM quotes WHERE id = ?",
             (quote_id,),
         )
         row = cursor.fetchone()
@@ -110,7 +110,6 @@ def get_quote_by_id(db_path: str, quote_id: int) -> Optional[Dict[str, Any]]:
             "id": row[0],
             "quote": row[1],
             "source": row[2],
-            "created_at": row[3],
         }
     return None
 
