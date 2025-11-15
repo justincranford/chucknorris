@@ -12,7 +12,7 @@ import re
 import sqlite3
 import sys
 import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
 import requests
@@ -25,8 +25,8 @@ DEFAULT_SOURCES = [
     "https://api.chucknorris.io/jokes/search?query=all",
     "https://parade.com/970343/parade/chuck-norris-jokes/",
     "https://www.thefactsite.com/top-100-chuck-norris-facts/",
-    "https://www.chucknorrisfacts.fr/en/top-100-chuck-norris-facts",
-    "https://www.factinate.com/quote/chuck-norris-jokes/",
+    "https://www.chucknorrisfacts.fr/en/top-100-chuck-norris-facts",  # noqa: E501
+    "https://www.factinate.com/quote/chuck-norris-jokes/",  # noqa: E501
     # "https://api.icndb.com/jokes/random",  # NOTE: This is essentially the same as source 1 - commented out
     # "https://www.rd.com/list/chuck-norris-jokes/",  # DEAD LINK - marked for removal - commented out
 ]
@@ -56,24 +56,27 @@ def create_database(db_path: str) -> None:
     Args:
         db_path: Path to the SQLite database file.
     """
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS quotes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            quote TEXT NOT NULL UNIQUE,
-            source TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS quotes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                quote TEXT NOT NULL UNIQUE,
+                source TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """
         )
-    """)
 
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_quote ON quotes(quote)
-    """)
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_quote ON quotes(quote)
+        """
+        )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
     logging.info(f"Database created/verified at {db_path}")
 
 
@@ -220,8 +223,12 @@ def extract_quotes_from_parade(content: str, source: str) -> List[Dict[str, str]
             elements = soup.select(selector)
             for elem in elements:
                 text = elem.get_text(strip=True)
-                if (text and len(text) > 20 and len(text) < 500 and
-                    "chuck norris" in text.lower()):
+                if (
+                    text
+                    and len(text) > 20
+                    and len(text) < 500
+                    and "chuck norris" in text.lower()
+                ):
                     quotes.append({"quote": text, "source": source})
 
         # Remove duplicates
@@ -267,9 +274,13 @@ def extract_quotes_from_thefactsite(content: str, source: str) -> List[Dict[str,
             for elem in elements:
                 text = elem.get_text(strip=True)
                 # Remove numbering like "1. " or "1) "
-                text = re.sub(r'^\d+\.?\s*', '', text)
-                if (text and len(text) > 20 and len(text) < 500 and
-                    "chuck norris" in text.lower()):
+                text = re.sub(r"^\d+\.?\s*", "", text)
+                if (
+                    text
+                    and len(text) > 20
+                    and len(text) < 500
+                    and "chuck norris" in text.lower()
+                ):
                     quotes.append({"quote": text, "source": source})
 
         logging.debug(f"Extracted {len(quotes)} quotes from Thefactsite.com")
@@ -280,7 +291,9 @@ def extract_quotes_from_thefactsite(content: str, source: str) -> List[Dict[str,
         return []
 
 
-def extract_quotes_from_chucknorrisfacts_fr(content: str, source: str) -> List[Dict[str, str]]:
+def extract_quotes_from_chucknorrisfacts_fr(
+    content: str, source: str
+) -> List[Dict[str, str]]:
     """Extract quotes from Chucknorrisfacts.fr.
 
     Args:
@@ -307,9 +320,13 @@ def extract_quotes_from_chucknorrisfacts_fr(content: str, source: str) -> List[D
             for elem in elements:
                 text = elem.get_text(strip=True)
                 # Handle French numbering/removal
-                text = re.sub(r'^\d+\.?\s*', '', text)
-                if (text and len(text) > 20 and len(text) < 500 and
-                    "chuck norris" in text.lower()):
+                text = re.sub(r"^\d+\.?\s*", "", text)
+                if (
+                    text
+                    and len(text) > 20
+                    and len(text) < 500
+                    and "chuck norris" in text.lower()
+                ):
                     quotes.append({"quote": text, "source": source})
 
         logging.debug(f"Extracted {len(quotes)} quotes from Chucknorrisfacts.fr")
@@ -347,8 +364,12 @@ def extract_quotes_from_factinate(content: str, source: str) -> List[Dict[str, s
             elements = soup.select(selector)
             for elem in elements:
                 text = elem.get_text(strip=True)
-                if (text and len(text) > 20 and len(text) < 500 and
-                    "chuck norris" in text.lower()):
+                if (
+                    text
+                    and len(text) > 20
+                    and len(text) < 500
+                    and "chuck norris" in text.lower()
+                ):
                     quotes.append({"quote": text, "source": source})
 
         logging.debug(f"Extracted {len(quotes)} quotes from Factinate.com")
@@ -359,7 +380,9 @@ def extract_quotes_from_factinate(content: str, source: str) -> List[Dict[str, s
         return []
 
 
-def extract_quotes(content: str, source: str, content_type: str = "auto") -> List[Dict[str, str]]:
+def extract_quotes(
+    content: str, source: str, content_type: str = "auto"
+) -> List[Dict[str, str]]:
     """Extract quotes from content based on type detection and source routing.
 
     Args:
@@ -409,28 +432,29 @@ def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
         logging.warning("No quotes to save")
         return 0
 
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
 
-    saved_count = 0
-    duplicate_count = 0
+        saved_count = 0
+        duplicate_count = 0
 
-    for quote_data in quotes:
-        try:
-            cursor.execute(
-                "INSERT INTO quotes (quote, source) VALUES (?, ?)",
-                (quote_data["quote"], quote_data["source"]),
-            )
-            saved_count += 1
-        except sqlite3.IntegrityError:
-            # Duplicate quote
-            duplicate_count += 1
-            logging.debug(f"Skipping duplicate quote: {quote_data['quote'][:50]}...")
+        for quote_data in quotes:
+            try:
+                cursor.execute(
+                    "INSERT INTO quotes (quote, source) VALUES (?, ?)",
+                    (quote_data["quote"], quote_data["source"]),
+                )
+                saved_count += 1
+            except sqlite3.IntegrityError:
+                # Duplicate quote
+                duplicate_count += 1
+                logging.debug(f"Skipping duplicate quote: {quote_data['quote'][:50]}...")
 
-    conn.commit()
-    conn.close()
+        conn.commit()
 
-    logging.info(f"Saved {saved_count} new quotes, skipped {duplicate_count} duplicates")
+    logging.info(
+        f"Saved {saved_count} new quotes, skipped {duplicate_count} duplicates"
+    )
     return saved_count
 
 

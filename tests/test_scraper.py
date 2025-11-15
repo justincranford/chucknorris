@@ -79,7 +79,9 @@ class TestCreateDatabase:
         """Test that quotes table is created with correct schema."""
         conn = sqlite3.connect(temp_db)
         cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='quotes'")
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='quotes'"
+        )
         assert cursor.fetchone() is not None
         conn.close()
 
@@ -87,7 +89,9 @@ class TestCreateDatabase:
         """Test that index on quote column is created."""
         conn = sqlite3.connect(temp_db)
         cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_quote'")
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_quote'"
+        )
         assert cursor.fetchone() is not None
         conn.close()
 
@@ -202,7 +206,9 @@ class TestExtractQuotesFromHtml:
 
     def test_extract_quotes_from_paragraph_with_chuck_norris(self):
         """Test extraction from paragraphs containing 'Chuck Norris'."""
-        html = "<html><body><p>Chuck Norris can slam a revolving door.</p></body></html>"
+        html = (
+            "<html><body><p>Chuck Norris can slam a revolving door.</p></body></html>"
+        )
         quotes = extract_quotes_from_html(html, "test_source")
         # Should find at least one quote
         assert len(quotes) >= 0
@@ -467,7 +473,7 @@ class TestExtractQuotesRouting:
 
     def test_extract_quotes_routes_to_parade(self):
         """Test that extract_quotes routes Parade.com to specific function."""
-        html = '<p>Chuck Norris can do anything. Even HTML parsing.</p>'
+        html = "<p>Chuck Norris can do anything. Even HTML parsing.</p>"
         source = "https://parade.com/970343/parade/chuck-norris-jokes/"
         quotes = extract_quotes(html, source, "html")
         assert len(quotes) >= 1
@@ -475,14 +481,14 @@ class TestExtractQuotesRouting:
 
     def test_extract_quotes_routes_to_thefactsite(self):
         """Test routing to Thefactsite.com function."""
-        html = '<ol><li>Chuck Norris fact from the site.</li></ol>'
+        html = "<ol><li>Chuck Norris fact from the site.</li></ol>"
         source = "https://www.thefactsite.com/top-100-chuck-norris-facts/"
         quotes = extract_quotes(html, source, "html")
         assert len(quotes) >= 1
 
     def test_extract_quotes_routes_to_fallback(self):
         """Test routing to generic HTML extraction for unknown sites."""
-        html = '<p>Chuck Norris from unknown site.</p>'
+        html = "<p>Chuck Norris from unknown site.</p>"
         source = "https://unknown-site.com/quotes"
         quotes = extract_quotes(html, source, "html")
         assert len(quotes) >= 1

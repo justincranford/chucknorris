@@ -51,11 +51,10 @@ def validate_database(db_path: str) -> bool:
         return False
 
     try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM quotes")
-        count = cursor.fetchone()[0]
-        conn.close()
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM quotes")
+            count = cursor.fetchone()[0]
 
         if count == 0:
             logging.error("Database is empty. Please run the scraper first.")
@@ -78,11 +77,10 @@ def get_all_quote_ids(db_path: str) -> List[int]:
     Returns:
         List of quote IDs.
     """
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute("SELECT id FROM quotes")
-    ids = [row[0] for row in cursor.fetchall()]
-    conn.close()
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM quotes")
+        ids = [row[0] for row in cursor.fetchall()]
 
     logging.debug(f"Retrieved {len(ids)} quote IDs")
     return ids
@@ -98,14 +96,13 @@ def get_quote_by_id(db_path: str, quote_id: int) -> Optional[Dict[str, Any]]:
     Returns:
         Dictionary containing quote data, or None if not found.
     """
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT id, quote, source, created_at FROM quotes WHERE id = ?",
-        (quote_id,),
-    )
-    row = cursor.fetchone()
-    conn.close()
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, quote, source, created_at FROM quotes WHERE id = ?",
+            (quote_id,),
+        )
+        row = cursor.fetchone()
 
     if row:
         return {
@@ -172,7 +169,9 @@ def generate_quotes(
     return quotes
 
 
-def export_quotes_text(quotes: List[Dict[str, Any]], output: Optional[TextIO] = None) -> None:
+def export_quotes_text(
+    quotes: List[Dict[str, Any]], output: Optional[TextIO] = None
+) -> None:
     """Export quotes in plain text format.
 
     Args:
@@ -188,7 +187,9 @@ def export_quotes_text(quotes: List[Dict[str, Any]], output: Optional[TextIO] = 
         logging.debug(f"Exported {len(quotes)} quotes in text format")
 
 
-def export_quotes_json(quotes: List[Dict[str, Any]], output: Optional[TextIO] = None) -> None:
+def export_quotes_json(
+    quotes: List[Dict[str, Any]], output: Optional[TextIO] = None
+) -> None:
     """Export quotes in JSON format.
 
     Args:
@@ -215,7 +216,9 @@ def export_quotes_json(quotes: List[Dict[str, Any]], output: Optional[TextIO] = 
         logging.debug(f"Exported {len(quotes)} quotes in JSON format")
 
 
-def export_quotes_csv(quotes: List[Dict[str, Any]], output: Optional[TextIO] = None) -> None:
+def export_quotes_csv(
+    quotes: List[Dict[str, Any]], output: Optional[TextIO] = None
+) -> None:
     """Export quotes in CSV format.
 
     Args:
@@ -318,7 +321,9 @@ Examples:
         "--count",
         type=int,
         default=DEFAULT_COUNT,
-        help=f"Number of quotes to generate (default: {DEFAULT_COUNT}, max: {MAX_COUNT:,})",
+        help=(
+            f"Number of quotes to generate (default: {DEFAULT_COUNT}, max: {MAX_COUNT:,})"  # noqa: E501
+        ),
     )
 
     parser.add_argument(

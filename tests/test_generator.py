@@ -29,14 +29,16 @@ def temp_db_with_quotes(tmp_path):
     conn = sqlite3.connect(str(db_path))
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE quotes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             quote TEXT NOT NULL UNIQUE,
             source TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """)
+    """
+    )
 
     sample_quotes = [
         ("Chuck Norris can divide by zero.", "source1"),
@@ -44,7 +46,9 @@ def temp_db_with_quotes(tmp_path):
         ("When Chuck Norris does a pushup, he pushes the Earth down.", "source3"),
     ]
 
-    cursor.executemany("INSERT INTO quotes (quote, source) VALUES (?, ?)", sample_quotes)
+    cursor.executemany(
+        "INSERT INTO quotes (quote, source) VALUES (?, ?)", sample_quotes
+    )
     conn.commit()
     conn.close()
 
@@ -87,14 +91,16 @@ class TestValidateDatabase:
         db_path = tmp_path / "empty.db"
         conn = sqlite3.connect(str(db_path))
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE quotes (
                 id INTEGER PRIMARY KEY,
                 quote TEXT NOT NULL,
                 source TEXT,
                 created_at TIMESTAMP
             )
-        """)
+        """
+        )
         conn.commit()
         conn.close()
 
@@ -125,14 +131,16 @@ class TestGetAllQuoteIds:
         db_path = tmp_path / "empty.db"
         conn = sqlite3.connect(str(db_path))
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE quotes (
                 id INTEGER PRIMARY KEY,
                 quote TEXT,
                 source TEXT,
                 created_at TIMESTAMP
             )
-        """)
+        """
+        )
         conn.commit()
         conn.close()
 
@@ -213,19 +221,36 @@ class TestGenerateQuotes:
         db_path = tmp_path / "empty.db"
         conn = sqlite3.connect(str(db_path))
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE quotes (
                 id INTEGER PRIMARY KEY,
                 quote TEXT,
                 source TEXT,
                 created_at TIMESTAMP
             )
-        """)
+        """
+        )
         conn.commit()
         conn.close()
 
         quotes = generate_quotes(str(db_path), count=5)
         assert quotes == []
+
+    @patch('quotes.generator.get_quote_by_id')
+    def test_generate_quotes_with_missing_quote(self, mock_get_quote, temp_db_with_quotes):
+        """Test generating quotes when some quotes are missing from DB."""
+        # Mock get_quote_by_id to return None for id 2
+        def mock_get(db_path, id):
+            if id == 2:
+                return None
+            return {"id": id, "quote": f"Quote {id}", "source": "test", "created_at": "now"}
+        
+        mock_get_quote.side_effect = mock_get
+        
+        quotes = generate_quotes(temp_db_with_quotes, count=3)
+        # Should skip the missing quote and generate others
+        assert len(quotes) == 2  # Only 2 out of 3
 
     @pytest.mark.parametrize("count", [1, 5, 10, 100])
     def test_generate_quotes_various_counts(self, temp_db_with_quotes, count):
