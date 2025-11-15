@@ -12,12 +12,32 @@ This is a Python project for scraping and generating Chuck Norris quotes. The pr
 - Use type hints for all function signatures
 - Write comprehensive docstrings (Google style)
 
+## Preferred Libraries
+- requests>=2.32.3: HTTP requests
+- beautifulsoup4>=4.12.3: HTML parsing
+- lxml>=5.3.0: XML/HTML parser
+- sqlite3: Database operations (standard library)
+- argparse: CLI argument parsing (standard library)
+- logging: Logging (standard library)
+- pytest>=8.3.3: Testing framework
+- pytest-cov>=5.0.0: Coverage reporting
+- pytest-mock>=3.14.0: Mocking utilities
+- black>=24.10.0: Code formatting
+- isort>=5.13.2: Import sorting
+- mypy>=1.13.0: Type checking
+- flake8>=7.1.0: Linting
+- pre-commit>=4.0.1: Git hooks
+
 ### Testing Requirements
 - Write parameterized tests for both happy and sad paths
 - Maintain minimum 95% code coverage
 - Use pytest fixtures for reusable test components
 - Mock external dependencies (network calls, file I/O)
 - Test edge cases and error conditions
+- **Systematically identify and test missing branches**: Use coverage analysis to find uncovered conditional paths and exception handlers
+- **Test exception handling thoroughly**: Ensure all try/catch blocks have corresponding test cases for both expected and unexpected exceptions
+- **Validate boundary conditions**: Test edge cases like empty inputs, maximum values, and boundary conditions (e.g., string lengths, numeric limits)
+- **Test CLI argument combinations**: Verify all format options, threading configurations, and parameter interactions
 
 ### Code Organization
 - Keep functions small and focused (single responsibility)
@@ -80,12 +100,17 @@ This is a Python project for scraping and generating Chuck Norris quotes. The pr
 4. Run pre-commit hooks before committing
 5. Verify code coverage remains above 95%
 
+### Commit Message Standards
+- Use conventional commit format: `type: Brief description`
+- Provide detailed explanations in the body with bullet points
+
 ## Execution
 - Scripts must have 700 permissions (rwx------) on Unix-like systems
 - Scripts must be executed directly, without prefixing with `python`
 - On Unix-like systems (Linux/macOS): Use `./script.py` after setting execute permissions
 - On Windows: Use `py script.py` (Python launcher) or ensure .py files are associated with Python
 - IMPORTANT: On Windows, do NOT use `python`, `python3`, or any other Python command variants; always use `py` to run Python scripts
+- IMPORTANT: Do NOT prefix Terminal commands with `cd` as it is unnecessary
 
 ## Tool Usage
 - ALWAYS use the built-in Copilot extension tools in VSCode/IntelliJ/Goland/PyCharm instead of their corresponding terminal commands; because they don't require manual authorization; and because they are faster and more efficient for the Copilot extension to use them
@@ -134,36 +159,45 @@ This is a Python project for scraping and generating Chuck Norris quotes. The pr
 - mcp_copilot_conta_prune: instead of docker system prune, do not use in terminal
 - mcp_copilot_conta_run_container: instead of docker run, do not use in terminal
 - mcp_copilot_conta_tag_image: instead of docker tag, do not use in terminal
-- mcp_pylance_mcp_s_pylanceDocuments: instead of manual documentation lookup, do not use in terminal
-- mcp_pylance_mcp_s_pylanceFileSyntaxErrors: instead of python -m py_compile, do not use in terminal
-- mcp_pylance_mcp_s_pylanceImports: instead of manual import analysis, do not use in terminal
-- mcp_pylance_mcp_s_pylanceInstalledTopLevelModules: instead of pip list, do not use in terminal
-- mcp_pylance_mcp_s_pylanceInvokeRefactoring: instead of manual refactoring, do not use in terminal
-- mcp_pylance_mcp_s_pylancePythonEnvironments: instead of conda env list or python -m venv, do not use in terminal
-- mcp_pylance_mcp_s_pylanceRunCodeSnippet: instead of python -c, do not use in terminal
-- mcp_pylance_mcp_s_pylanceSettings: instead of manual settings check, do not use in terminal
-- mcp_pylance_mcp_s_pylanceSyntaxErrors: instead of python -m py_compile, do not use in terminal
-- mcp_pylance_mcp_s_pylanceUpdatePythonEnvironment: instead of conda activate or source activate, do not use in terminal
-- mcp_pylance_mcp_s_pylanceWorkspaceRoots: instead of manual workspace check, do not use in terminal
-- mcp_pylance_mcp_s_pylanceWorkspaceUserFiles: instead of find . -name "*.py", do not use in terminal
-- run_in_terminal: this is the tool for running terminal commands, use it instead of manual terminal interaction
-- runSubagent: instead of manual subtask handling, do not use in terminal
-- runTests: instead of python -m pytest (macOS/Linux/Windows), do not use in terminal
-- terminal_last_command: instead of history (macOS/Linux) or doskey /history (Windows), do not use in terminal
-- terminal_selection: instead of manual selection, do not use in terminal
 
-## Preferred Libraries
-- requests>=2.32.3: HTTP requests
-- beautifulsoup4>=4.12.3: HTML parsing
-- lxml>=5.3.0: XML/HTML parser
-- sqlite3: Database operations (standard library)
-- argparse: CLI argument parsing (standard library)
-- logging: Logging (standard library)
-- pytest>=8.3.3: Testing framework
-- pytest-cov>=5.0.0: Coverage reporting
-- pytest-mock>=3.14.0: Mocking utilities
-- black>=24.10.0: Code formatting
-- isort>=5.13.2: Import sorting
-- mypy>=1.13.0: Type checking
-- flake8>=7.1.0: Linting
-- pre-commit>=4.0.1: Git hooks
+## Validation and Quality Assurance
+
+### After Substantive Changes
+- **Always run tests**: Execute the full test suite after any code modifications
+- **Check coverage**: Ensure coverage remains above 95% using `pytest --cov --cov-fail-under=95`
+- **Validate functionality**: Test both happy path and edge cases manually if needed
+- **Review error handling**: Verify that exceptions are properly caught and logged
+- **Check CLI interfaces**: Test command-line arguments and help text
+
+### Coverage Analysis Approach
+- Use `pytest --cov-report=term-missing` to identify uncovered lines
+- Focus on conditional branches (`if/elif/else`) that may not be exercised
+- Target exception handlers and error paths
+- Prioritize functions with complex logic or multiple code paths
+- Create targeted test cases for specific missing branches rather than broad tests
+
+### Testing Patterns by Functionality Type
+
+#### Exception Handling Tests
+- Test both expected and unexpected exceptions
+- Verify proper logging occurs in exception paths
+- Ensure resources are cleaned up appropriately
+- Test retry logic and failure thresholds
+
+#### CLI Argument Tests
+- Test all valid argument combinations
+- Verify default values are applied correctly
+- Test argument validation and error messages
+- Check that mutually exclusive options work properly
+
+#### Data Processing Tests
+- Test boundary conditions (empty inputs, maximum sizes)
+- Verify data transformation logic
+- Test format detection and parsing
+- Ensure deduplication works at all levels
+
+#### Concurrent/Multi-threaded Tests
+- Test both single-threaded and multi-threaded execution
+- Verify exception handling in threaded contexts
+- Ensure thread safety and proper synchronization
+- Test thread pool management and cleanup
