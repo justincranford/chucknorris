@@ -22,6 +22,7 @@ from bs4 import BeautifulSoup
 
 # Constants
 DEFAULT_OUTPUT_DB = "download/quotes.db"
+DEFAULT_OUTPUT_CSV = "download/quotes.csv"
 DEFAULT_SOURCES = [
     "https://api.chucknorris.io/jokes/random",
     "https://api.chucknorris.io/jokes/search?query=all",
