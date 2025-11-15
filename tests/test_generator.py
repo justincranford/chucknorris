@@ -2,6 +2,7 @@
 
 import csv
 import json
+import logging
 import sqlite3
 from io import StringIO
 from pathlib import Path
@@ -26,31 +27,30 @@ def temp_db_with_quotes(tmp_path):
     """Create a temporary database with sample quotes."""
     db_path = tmp_path / "test_quotes.db"
 
-    conn = sqlite3.connect(str(db_path))
-    cursor = conn.cursor()
+    with sqlite3.connect(str(db_path)) as conn:
+        cursor = conn.cursor()
 
-    cursor.execute(
+        cursor.execute(
+            """
+            CREATE TABLE quotes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                quote TEXT NOT NULL UNIQUE,
+                source TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
         """
-        CREATE TABLE quotes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            quote TEXT NOT NULL UNIQUE,
-            source TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """
-    )
 
-    sample_quotes = [
-        ("Chuck Norris can divide by zero.", "source1"),
-        ("Chuck Norris counted to infinity. Twice.", "source2"),
-        ("When Chuck Norris does a pushup, he pushes the Earth down.", "source3"),
-    ]
+        sample_quotes = [
+            ("Chuck Norris can divide by zero.", "source1"),
+            ("Chuck Norris counted to infinity. Twice.", "source2"),
+            ("When Chuck Norris does a pushup, he pushes the Earth down.", "source3"),
+        ]
 
-    cursor.executemany(
-        "INSERT INTO quotes (quote, source) VALUES (?, ?)", sample_quotes
-    )
-    conn.commit()
-    conn.close()
+        cursor.executemany(
+            "INSERT INTO quotes (quote, source) VALUES (?, ?)", sample_quotes
+        )
+        conn.commit()
 
     return str(db_path)
 
@@ -81,10 +81,13 @@ class TestValidateDatabase:
         """Test validation of existing database with quotes."""
         assert validate_database(temp_db_with_quotes) is True
 
-    def test_validate_database_not_exists(self, tmp_path):
+    def test_validate_database_not_exists(self, tmp_path, caplog):
         """Test validation of non-existent database."""
         db_path = tmp_path / "nonexistent.db"
-        assert validate_database(str(db_path)) is False
+        with caplog.at_level(logging.ERROR):
+            result = validate_database(str(db_path))
+        assert result is False
+        assert any("Database file not found" in record.message for record in caplog.records)
 
     def test_validate_database_empty(self, tmp_path):
         """Test validation of empty database."""
@@ -401,10 +404,20 @@ class TestExportQuotes:
         content = output_file.read_text()
         assert "Chuck Norris can divide by zero." in content
 
-    def test_export_quotes_empty_list_no_error(self):
+    def test_export_quotes_empty_list_no_error(self, caplog):
         """Test that exporting empty list doesn't error."""
-        # Should not raise an exception
-        export_quotes([], "text", None)
+        with caplog.at_level(logging.WARNING):
+            export_quotes([], "text", None)
+        assert any("No quotes to export" in record.message for record in caplog.records)
+
+    def test_export_quotes_empty_list_to_file(self, tmp_path, caplog):
+        """Test exporting empty list to file."""
+        output_file = tmp_path / "empty.txt"
+        with caplog.at_level(logging.WARNING):
+            export_quotes([], "text", str(output_file))
+        # File should not be created since no quotes
+        assert not output_file.exists()
+        assert any("No quotes to export" in record.message for record in caplog.records)
 
     @pytest.mark.parametrize("format_type", ["text", "json", "csv"])
     def test_export_quotes_all_formats(self, sample_quote_dicts, tmp_path, format_type):
@@ -414,8 +427,9 @@ class TestExportQuotes:
         assert output_file.exists()
         assert output_file.stat().st_size > 0
 
-    def test_export_quotes_unknown_format(self, sample_quote_dicts, tmp_path):
-        """Test exporting with unknown format (should just log error)."""
+    def test_export_quotes_unknown_format(self, sample_quote_dicts, tmp_path, caplog):
+        """Test exporting with unknown format logs error."""
         output_file = tmp_path / "output.txt"
-        # Should not raise exception, just log error
-        export_quotes(sample_quote_dicts, "unknown", str(output_file))
+        with caplog.at_level(logging.ERROR):
+            export_quotes(sample_quote_dicts, "unknown", str(output_file))
+            assert "Unknown format: unknown" in caplog.text

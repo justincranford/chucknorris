@@ -125,21 +125,26 @@ class TestFetchUrl:
         assert result is None
 
     @patch("download.scraper.requests.get")
-    def test_fetch_url_http_error(self, mock_get):
+    def test_fetch_url_http_error(self, mock_get, caplog):
         """Test URL fetch with HTTP error."""
-        mock_get.side_effect = requests.exceptions.HTTPError()
-        result = fetch_url("https://example.com", retries=1)
+        with caplog.at_level(logging.ERROR):
+            mock_get.side_effect = requests.exceptions.HTTPError()
+            result = fetch_url("https://example.com", retries=1)
         assert result is None
+        assert any("Failed to fetch" in record.message for record in caplog.records)
 
     @patch("download.scraper.requests.get")
     @patch("download.scraper.time.sleep")
-    def test_fetch_url_retry_logic(self, mock_sleep, mock_get):
+    def test_fetch_url_retry_logic(self, mock_sleep, mock_get, caplog):
         """Test retry logic on failure."""
-        mock_get.side_effect = requests.exceptions.RequestException()
-        result = fetch_url("https://example.com", retries=3)
+        with caplog.at_level(logging.WARNING):
+            mock_get.side_effect = requests.exceptions.RequestException()
+            result = fetch_url("https://example.com", retries=3)
         assert result is None
         assert mock_get.call_count == 3
         assert mock_sleep.call_count == 2  # One less than retries
+        assert any("Error fetching" in record.message for record in caplog.records)
+        assert any("Failed to fetch" in record.message for record in caplog.records)
 
 
 class TestExtractQuotesFromJson:
@@ -167,10 +172,12 @@ class TestExtractQuotesFromJson:
         quotes = extract_quotes_from_json(json_string, "test_source")
         assert len(quotes) == expected_count
 
-    def test_extract_quotes_from_json_invalid_json(self):
+    def test_extract_quotes_from_json_invalid_json(self, caplog):
         """Test extraction with invalid JSON."""
-        quotes = extract_quotes_from_json("invalid json", "test_source")
-        assert len(quotes) == 0
+        with caplog.at_level(logging.ERROR):
+            quotes = extract_quotes_from_json("invalid json", "test_source")
+            assert len(quotes) == 0
+            assert "Failed to parse JSON" in caplog.text
 
     def test_extract_quotes_from_json_source_attribution(self):
         """Test that source is properly attributed."""
