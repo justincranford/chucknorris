@@ -57,8 +57,10 @@ This is a Python project for scraping and generating Chuck Norris quotes. The pr
 5. Verify code coverage remains above 95%
 
 ## Execution
-- Scripts must have 700 permissions (rwx------)
+- Scripts must have 700 permissions (rwx------) on Unix-like systems
 - Scripts must be executed directly, without prefixing with `python`
+- On Unix-like systems (Linux/macOS): Use `./script.py` after setting execute permissions
+- On Windows: Use `py script.py` (Python launcher) or ensure .py files are associated with Python
 
 ## Tool Usage
 - ALWAYS use the built-in Copilot extension tools in VSCode/IntelliJ/Goland/PyCharm instead of their corresponding terminal commands; because they don't require manual authorization; and because they are faster and more efficient for the Copilot extension to use them
