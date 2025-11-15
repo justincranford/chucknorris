@@ -61,10 +61,12 @@ env/
 Thumbs.db
 
 # Project specific
-*.db
-*.sqlite
-*.sqlite3
-download/quotes.db
+**/*.db
+**/*.sqlite
+**/*.sqlite3
 
 # Logs
 *.log
+
+# Environment variables
+.env

@@ -623,13 +623,13 @@ def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
     return saved_count
 
 
-def scrape_source(source_url: str, output_path: str, format_type: str = "sqlite") -> int:
+def scrape_source(source_url: str, output_path: str, formats: List[str]) -> int:
     """Scrape quotes from a single source.
 
     Args:
         source_url: URL of the source to scrape.
-        output_path: Path to the output file (database or CSV).
-        format_type: Output format ("sqlite" or "csv").
+        output_path: Path to the output file base.
+        formats: List of output formats ("sqlite" and/or "csv").
 
     Returns:
         Number of quotes successfully scraped and saved.
@@ -647,20 +647,26 @@ def scrape_source(source_url: str, output_path: str, format_type: str = "sqlite"
         logging.warning(f"No quotes found at {source_url}")
         return 0
 
-    if format_type == "csv":
-        saved = save_quotes_to_csv(quotes, output_path)
-    else:
-        saved = save_quotes_to_db(quotes, output_path)
-    return saved
+    total_saved = 0
+    for fmt in formats:
+        if fmt == "csv":
+            saved = save_quotes_to_csv(quotes, f"{output_path}.csv")
+        elif fmt == "sqlite":
+            saved = save_quotes_to_db(quotes, f"{output_path}.db")
+        else:
+            logging.warning(f"Unknown format: {fmt}")
+            saved = 0
+        total_saved += saved
+    return total_saved
 
 
-def scrape_all_sources(sources: List[str], output_path: str, format_type: str = "sqlite") -> int:
+def scrape_all_sources(sources: List[str], output_path: str, formats: List[str]) -> int:
     """Scrape quotes from all provided sources.
 
     Args:
         sources: List of source URLs.
-        output_path: Path to the output file (database or CSV).
-        format_type: Output format ("sqlite" or "csv").
+        output_path: Path to the output file base.
+        formats: List of output formats.
 
     Returns:
         Total number of quotes successfully scraped and saved.
@@ -669,7 +675,7 @@ def scrape_all_sources(sources: List[str], output_path: str, format_type: str = 
 
     for source in sources:
         try:
-            saved = scrape_source(source, output_path, format_type)
+            saved = scrape_source(source, output_path, formats)
             total_saved += saved
         except Exception as e:
             logging.error(f"Error scraping {source}: {e}")
@@ -737,15 +743,15 @@ Examples:
         "-o",
         "--output",
         default=DEFAULT_OUTPUT_DB,
-        help=f"Output file path (database for sqlite format, CSV for csv format) (default: {DEFAULT_OUTPUT_DB})",
+        help=f"Output file path base (will generate .db and .csv files for both format) (default: {DEFAULT_OUTPUT_DB})",
     )
 
     parser.add_argument(
         "-f",
         "--format",
-        default="sqlite",
-        choices=["sqlite", "csv"],
-        help="Output format (default: sqlite)",
+        default="both",
+        choices=["sqlite", "csv", "both"],
+        help="Output format (default: both)",
     )
 
     parser.add_argument(
@@ -777,12 +783,22 @@ def main() -> int:
         logging.error("No valid sources provided")
         return 1
 
-    # Create database only for SQLite format
-    if args.format == "sqlite":
-        create_database(args.output)
+    # Determine output formats
+    if args.format == "both":
+        formats = ["sqlite", "csv"]
+        # Use base path without extension for both formats
+        output_base = args.output.rsplit('.', 1)[0] if '.' in args.output else args.output
+    else:
+        formats = [args.format]
+        output_base = args.output
+
+    # Create database only if SQLite format is included
+    if "sqlite" in formats:
+        db_path = f"{output_base}.db"
+        create_database(db_path)
 
     # Scrape quotes
-    total_saved = scrape_all_sources(sources, args.output, args.format)
+    total_saved = scrape_all_sources(sources, output_base, formats)
 
     logging.info(f"Scraping completed. Total quotes saved: {total_saved}")
 
