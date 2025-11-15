@@ -1,0 +1,17 @@
+{
+  // Schema: vscode://schemas/extensions
+  // Recommended extensions for the CryptoUtil workspace
+  "recommendations": [
+    "github.copilot",         // GitHub Copilot assistance
+    "github.copilot-chat",    // Copilot Chat integration
+    "mhutchie.git-graph",     // Visualize Git history for complex refactors
+    "eamodio.gitlens",         // Advanced Git insights (already configured)
+    "ms-python.python",       // Python scripts and tooling helpers
+    "ms-azuretools.vscode-docker", // Docker and Docker Compose authoring
+    "redhat.vscode-yaml",     // YAML editing validation (Compose, workflows)
+    "yzhang.markdown-all-in-one", // Enhanced Markdown editing
+    "streetsidesoftware.code-spell-checker", // Spell checking docs/instructions
+    "gruntfuggly.todo-tree",  // Surface TODO items in docs/todos files
+  ],
+  "unwantedRecommendations": []
+}
