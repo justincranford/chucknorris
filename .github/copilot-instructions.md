@@ -61,9 +61,11 @@ This is a Python project for scraping and generating Chuck Norris quotes. The pr
 - Scripts must be executed directly, without prefixing with `python`
 - On Unix-like systems (Linux/macOS): Use `./script.py` after setting execute permissions
 - On Windows: Use `py script.py` (Python launcher) or ensure .py files are associated with Python
+- IMPORTANT: On Windows, do NOT use `python`, `python3`, or any other Python command variants; always use `py` to run Python scripts
 
 ## Tool Usage
 - ALWAYS use the built-in Copilot extension tools in VSCode/IntelliJ/Goland/PyCharm instead of their corresponding terminal commands; because they don't require manual authorization; and because they are faster and more efficient for the Copilot extension to use them
+- IMPORTANT: Terminal commands executed via run_in_terminal are run from the workspace root directory; do NOT prefix commands with `cd` as it is unnecessary and will be simplified away by the tool
 - create_directory: instead of mkdir (macOS/Linux/Windows), do not use in terminal
 - create_file: instead of touch (macOS/Linux) or echo > (macOS/Linux/Windows) or New-Item (Windows PowerShell), do not use in terminal
 - create_new_jupyter_notebook: instead of jupyter notebook (macOS/Linux/Windows), do not use in terminal
