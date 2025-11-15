@@ -1,0 +1,209 @@
+# Chuck Norris Quotes Project
+
+A Python-based project to scrape Chuck Norris quotes from various online databases and generate random quotes based on the scraped data.
+
+## Features
+
+- 🔍 **Quote Scraper**: ETL pipeline to scrape Chuck Norris quotes from multiple online sources
+- 🎲 **Quote Generator**: Generate up to 10,000,000 unique random Chuck Norris quotes
+- 💾 **Efficient Storage**: SQLite database optimized for quick access
+- 🧪 **Fully Tested**: 95%+ code coverage with comprehensive unit tests
+- 🎯 **Type-Safe**: Full type hints and mypy validation
+- 🔧 **CLI Interface**: User-friendly command-line interface with extensive options
+
+## Requirements
+
+- Python 3.9 or higher
+- pip (Python package installer)
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd chucknorris
+```
+
+2. Create a virtual environment (recommended):
+```bash
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Install pre-commit hooks:
+```bash
+pre-commit install
+```
+
+## Usage
+
+### Quote Scraper
+
+Scrape Chuck Norris quotes from online sources and store them in a database:
+
+```bash
+python download/scraper.py
+```
+
+#### Options:
+- `-s, --sources`: List of URLs or sources to scrape (space-separated)
+- `-o, --output`: Output database file path (default: `download/quotes.db`)
+- `-f, --format`: Output format (default: `sqlite`)
+- `-v, --verbose`: Enable verbose logging
+- `-h, --help`: Display help and usage examples
+
+#### Examples:
+```bash
+# Scrape from default sources
+python download/scraper.py
+
+# Specify custom output location
+python download/scraper.py --output ./my_quotes.db
+
+# Enable verbose logging
+python download/scraper.py --verbose
+
+# Scrape from specific sources
+python download/scraper.py --sources https://api.chucknorris.io/jokes/random
+```
+
+### Quote Generator
+
+Generate random Chuck Norris quotes from the scraped database:
+
+```bash
+python quotes/generator.py
+```
+
+#### Options:
+- `-c, --count`: Number of quotes to generate (default: 1, max: 10,000,000)
+- `-s, --seed`: Random seed for reproducible output (default: None for truly random)
+- `-o, --output`: Output file path (default: stdout)
+- `-f, --format`: Output format - `text`, `json`, or `csv` (default: `text`)
+- `-d, --database`: Path to the quotes database (default: `download/quotes.db`)
+- `-v, --verbose`: Enable verbose logging
+- `-h, --help`: Display help and usage examples
+
+#### Examples:
+```bash
+# Generate a single random quote
+python quotes/generator.py
+
+# Generate 10 random quotes
+python quotes/generator.py --count 10
+
+# Generate quotes with a specific seed for reproducibility
+python quotes/generator.py --count 5 --seed 42
+
+# Output to a file in JSON format
+python quotes/generator.py --count 100 --format json --output quotes.json
+
+# Generate CSV format
+python quotes/generator.py --count 50 --format csv --output quotes.csv
+
+# Use a custom database
+python quotes/generator.py --database ./my_quotes.db --count 5
+```
+
+## Testing
+
+Run the test suite:
+
+```bash
+pytest
+```
+
+Run tests with coverage report:
+
+```bash
+pytest --cov=download --cov=quotes --cov-report=html
+```
+
+View coverage report:
+```bash
+# The HTML report will be in htmlcov/index.html
+```
+
+## Development
+
+### Code Quality Tools
+
+This project uses several tools to maintain code quality:
+
+- **Black**: Code formatting
+- **isort**: Import sorting
+- **flake8**: Linting
+- **mypy**: Type checking
+- **pre-commit**: Git hooks for automated checks
+
+Run all checks manually:
+```bash
+pre-commit run --all-files
+```
+
+### Project Structure
+
+```
+chucknorris/
+├── .github/
+│   ├── workflows/          # CI/CD pipelines
+│   └── copilot-instructions.md
+├── download/
+│   └── scraper.py          # Quote scraping script
+├── quotes/
+│   └── generator.py        # Quote generation script
+├── scripts/                # Utility scripts
+├── tests/                  # Unit tests
+│   ├── test_scraper.py
+│   └── test_generator.py
+├── .pre-commit-config.yaml
+├── .gitignore
+├── pyproject.toml          # Project configuration
+├── requirements.txt        # Python dependencies
+└── README.md
+```
+
+## API Documentation
+
+### Scraper Module (`download/scraper.py`)
+
+The scraper module provides functionality to extract, transform, and load Chuck Norris quotes from various online sources.
+
+**Key Functions:**
+- `scrape_quotes(sources, output_db)`: Main ETL pipeline
+- `fetch_from_api(url)`: Fetch quotes from JSON APIs
+- `parse_html(content)`: Parse quotes from HTML pages
+- `save_to_database(quotes, db_path)`: Store quotes in SQLite database
+
+### Generator Module (`quotes/generator.py`)
+
+The generator module provides functionality to generate random Chuck Norris quotes from the database.
+
+**Key Functions:**
+- `generate_quotes(count, seed, database)`: Generate random quotes
+- `export_quotes(quotes, format, output)`: Export quotes in various formats
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and ensure they pass
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Acknowledgments
+
+- Chuck Norris for being awesome
+- Various Chuck Norris quote databases and APIs

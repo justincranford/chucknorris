@@ -1,0 +1,35 @@
+#fetch https://code.visualstudio.com/docs/copilot/customization/custom-instructions
+
+initialize
+- git repo
+- .github/workflow/
+- .github/copilot-instructions.md
+- scripts/
+- .pre-commit config yml
+
+install latest
+- pre-commit
+- python
+- pytest
+- py code coverage
+
+for all python apps
+- add requirement and toml docs with the latest versions as the min required versions
+- create all code in a way that it is unit testable
+- create parameterized tests for happy and sad path tests
+- always run the tests and verify they pass
+- require 95% or higher code coverage
+- support parameter validation
+-- help (-h -help --help) => include usage and examples
+
+create a python script in ./download/ to scrap databases of chuck norris quotes
+- do ETL for different formats
+- output should be single DB file, with efficient storage format for use in next script
+- extra parameters
+-- others parameters?
+
+create a python script in ./quotes/ to generate up to 10,000,000 random chuck norris quotes
+- extra parameters
+-- count (-c -count --count) => number of quotes to output
+-- seed (-s -seed --seed) => reproducible order of random quotes; default is random enough to never repeat
+-- others parameters?
