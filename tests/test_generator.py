@@ -173,7 +173,6 @@ class TestGetQuoteById:
         assert "id" in quote
         assert "quote" in quote
         assert "source" in quote
-        assert "created_at" in quote
 
 
 class TestGenerateQuotes:

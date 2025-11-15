@@ -35,7 +35,7 @@ class TestParseArguments:
             assert args.seed is None
             assert args.output is None
             assert args.format == "text"
-            assert args.database == "download/quotes.db"
+            assert args.database == "scraper/quotes.db"
             assert args.verbose is False
 
     def test_parse_arguments_with_count(self):

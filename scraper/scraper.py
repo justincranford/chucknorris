@@ -21,9 +21,9 @@ import requests
 from bs4 import BeautifulSoup
 
 # Constants
-DEFAULT_OUTPUT_DB = "download/quotes.db"
-DEFAULT_OUTPUT_CSV = "download/quotes.csv"
-SOURCES_FILE = "sources.txt"
+DEFAULT_OUTPUT_DB = "scraper/quotes.db"
+DEFAULT_OUTPUT_CSV = "scraper/quotes.csv"
+SOURCES_FILE = "scraper/sources.txt"
 MAX_RETRIES = 3
 RETRY_DELAY = 3  # seconds
 REQUEST_TIMEOUT = 10  # seconds
@@ -202,10 +202,6 @@ DEFAULT_SOURCES = [
     # "https://api.icndb.com/jokes/random",  # NOTE: This is essentially the same as source 1 - commented out
     # "https://www.rd.com/list/chuck-norris-jokes/",  # DEAD LINK - marked for removal - commented out
 ]
-MAX_RETRIES = 3
-RETRY_DELAY = 2  # seconds
-REQUEST_TIMEOUT = 10  # seconds
-USER_AGENT = "ChuckNorrisQuoteScraper/1.0"
 
 
 def setup_logging(verbose: bool = False) -> None:

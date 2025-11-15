@@ -9,7 +9,8 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 import requests
 
-from download.scraper import (
+from scraper.scraper import (
+    comment_out_source,
     create_database,
     extract_quotes,
     extract_quotes_from_chucknorrisfacts_fr,
@@ -19,6 +20,8 @@ from download.scraper import (
     extract_quotes_from_parade,
     extract_quotes_from_thefactsite,
     fetch_url,
+    load_sources,
+    save_quotes_to_csv,
     save_quotes_to_db,
     scrape_all_sources,
     scrape_source,
@@ -47,7 +50,7 @@ def sample_quotes():
 class TestSetupLogging:
     """Tests for logging setup."""
 
-    @patch("download.scraper.logging.basicConfig")
+    @patch("scraper.scraper.logging.basicConfig")
     def test_setup_logging_default(self, mock_config):
         """Test default logging setup."""
         setup_logging(verbose=False)
@@ -56,7 +59,7 @@ class TestSetupLogging:
         call_args = mock_config.call_args
         assert call_args[1]["level"] == logging.INFO
 
-    @patch("download.scraper.logging.basicConfig")
+    @patch("scraper.scraper.logging.basicConfig")
     def test_setup_logging_verbose(self, mock_config):
         """Test verbose logging setup."""
         setup_logging(verbose=True)
@@ -102,10 +105,144 @@ class TestCreateDatabase:
         create_database(temp_db)
 
 
+class TestCommentOutSource:
+    """Tests for commenting out sources."""
+
+    @patch("scraper.scraper.SOURCES_FILE", "test_sources.txt")
+    def test_comment_out_source_success(self):
+        """Test successfully commenting out a source."""
+        # Create a test sources file
+        with open("test_sources.txt", "w") as f:
+            f.write("https://example1.com\n")
+            f.write("https://example2.com\n")
+            f.write("# https://example3.com\n")
+
+        comment_out_source("https://example2.com", "HTTP 404")
+
+        with open("test_sources.txt", "r") as f:
+            content = f.read()
+
+        assert "# [HTTP 404] https://example2.com" in content
+        assert "https://example1.com" in content
+        assert "# https://example3.com" in content
+
+        # Clean up
+        import os
+        os.remove("test_sources.txt")
+
+    @patch("scraper.scraper.SOURCES_FILE", "nonexistent.txt")
+    def test_comment_out_source_file_not_found(self, caplog):
+        """Test commenting out source when file doesn't exist."""
+        with caplog.at_level(logging.ERROR):
+            comment_out_source("https://example.com", "test")
+        assert any("Failed to comment out source" in record.message for record in caplog.records)
+
+
+class TestLoadSources:
+    """Tests for loading sources."""
+
+    @patch("scraper.scraper.SOURCES_FILE", "test_sources.txt")
+    def test_load_sources_success(self):
+        """Test loading sources successfully."""
+        # Create a test sources file
+        with open("test_sources.txt", "w") as f:
+            f.write("https://example1.com\n")
+            f.write("# https://example2.com\n")
+            f.write("https://example3.com\n")
+            f.write("\n")  # Empty line
+
+        result = load_sources()
+        assert result == ["https://example1.com", "https://example3.com"]
+
+        # Clean up
+        import os
+        os.remove("test_sources.txt")
+
+    @patch("scraper.scraper.SOURCES_FILE", "nonexistent.txt")
+    def test_load_sources_file_not_found(self, caplog):
+        """Test loading sources when file doesn't exist."""
+        with caplog.at_level(logging.WARNING):
+            result = load_sources()
+        assert result == []
+        assert any("Sources file nonexistent.txt not found" in record.message for record in caplog.records)
+
+
+class TestSaveQuotes:
+    """Tests for saving quotes."""
+
+    def test_save_quotes_to_db_success(self, temp_db, sample_quotes):
+        """Test saving quotes to database successfully."""
+        result = save_quotes_to_db(sample_quotes, temp_db)
+        assert result == 2
+
+        # Verify quotes were saved
+        conn = sqlite3.connect(temp_db)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM quotes")
+        assert cursor.fetchone()[0] == 2
+        conn.close()
+
+    def test_save_quotes_to_db_empty_list(self, temp_db, caplog):
+        """Test saving empty list of quotes."""
+        with caplog.at_level(logging.WARNING):
+            result = save_quotes_to_db([], temp_db)
+        assert result == 0
+        assert any("No quotes to save" in record.message for record in caplog.records)
+
+    def test_save_quotes_to_db_duplicate(self, temp_db, sample_quotes):
+        """Test saving duplicate quotes."""
+        # Save first time
+        result1 = save_quotes_to_db(sample_quotes, temp_db)
+        assert result1 == 2
+
+        # Save again - should save 0 due to unique constraint
+        result2 = save_quotes_to_db(sample_quotes, temp_db)
+        assert result2 == 0
+
+    def test_save_quotes_to_csv_success(self, tmp_path, sample_quotes):
+        """Test saving quotes to CSV successfully."""
+        csv_path = tmp_path / "test_quotes.csv"
+        result = save_quotes_to_csv(sample_quotes, str(csv_path))
+        assert result == 2
+
+        # Verify CSV was created and has content
+        assert csv_path.exists()
+        with open(csv_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            assert "source" in content
+            assert "quote" in content
+            assert "Chuck Norris can divide by zero." in content
+
+    def test_save_quotes_to_csv_empty_list(self, tmp_path, caplog):
+        """Test saving empty list to CSV."""
+        csv_path = tmp_path / "empty.csv"
+        with caplog.at_level(logging.WARNING):
+            result = save_quotes_to_csv([], str(csv_path))
+        assert result == 0
+        assert any("No quotes to save" in record.message for record in caplog.records)
+
+    def test_save_quotes_to_csv_append(self, tmp_path, sample_quotes):
+        """Test appending to existing CSV."""
+        csv_path = tmp_path / "append.csv"
+
+        # Save first batch
+        result1 = save_quotes_to_csv([sample_quotes[0]], str(csv_path))
+        assert result1 == 1
+
+        # Save second batch - should append
+        result2 = save_quotes_to_csv([sample_quotes[1]], str(csv_path))
+        assert result2 == 1
+
+        # Verify both are in file
+        with open(csv_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+            assert len(lines) == 3  # header + 2 quotes
+
+
 class TestFetchUrl:
     """Tests for URL fetching."""
 
-    @patch("download.scraper.requests.get")
+    @patch("scraper.scraper.requests.get")
     def test_fetch_url_success(self, mock_get):
         """Test successful URL fetch."""
         mock_response = Mock()
@@ -117,24 +254,31 @@ class TestFetchUrl:
         assert result == "test content"
         mock_get.assert_called_once()
 
-    @patch("download.scraper.requests.get")
+    @patch("scraper.scraper.requests.get")
     def test_fetch_url_timeout(self, mock_get):
         """Test URL fetch with timeout."""
         mock_get.side_effect = requests.exceptions.Timeout()
         result = fetch_url("https://example.com", retries=1)
         assert result is None
 
-    @patch("download.scraper.requests.get")
-    def test_fetch_url_http_error(self, mock_get, caplog):
+    @patch("scraper.scraper.comment_out_source")
+    @patch("scraper.scraper.requests.get")
+    def test_fetch_url_http_error(self, mock_get, mock_comment, caplog):
         """Test URL fetch with HTTP error."""
-        with caplog.at_level(logging.ERROR):
-            mock_get.side_effect = requests.exceptions.HTTPError()
+        with caplog.at_level(logging.WARNING):
+            mock_response = Mock()
+            mock_response.status_code = 404
+            http_error = requests.exceptions.HTTPError("404 Client Error")
+            http_error.response = mock_response
+            mock_response.raise_for_status.side_effect = http_error
+            mock_get.return_value = mock_response
             result = fetch_url("https://example.com", retries=1)
         assert result is None
-        assert any("Failed to fetch" in record.message for record in caplog.records)
+        assert any("Error fetching" in record.message for record in caplog.records)
+        mock_comment.assert_called_once_with("https://example.com", "HTTP 404")
 
-    @patch("download.scraper.requests.get")
-    @patch("download.scraper.time.sleep")
+    @patch("scraper.scraper.requests.get")
+    @patch("scraper.scraper.time.sleep")
     def test_fetch_url_retry_logic(self, mock_sleep, mock_get, caplog):
         """Test retry logic on failure."""
         with caplog.at_level(logging.WARNING):
@@ -343,59 +487,59 @@ class TestValidateSources:
 class TestScrapeSource:
     """Tests for scraping a single source."""
 
-    @patch("download.scraper.fetch_url")
-    @patch("download.scraper.extract_quotes")
-    @patch("download.scraper.save_quotes_to_db")
+    @patch("scraper.scraper.fetch_url")
+    @patch("scraper.scraper.extract_quotes")
+    @patch("scraper.scraper.save_quotes_to_db")
     def test_scrape_source_success(self, mock_save, mock_extract, mock_fetch, temp_db):
         """Test successful source scraping."""
         mock_fetch.return_value = "content"
         mock_extract.return_value = [{"quote": "Test", "source": "src"}]
         mock_save.return_value = 1
 
-        result = scrape_source("https://example.com", temp_db)
+        result = scrape_source("https://example.com", temp_db, None, ["sqlite"])
         assert result == 1
 
-    @patch("download.scraper.fetch_url")
+    @patch("scraper.scraper.fetch_url")
     def test_scrape_source_fetch_failure(self, mock_fetch, temp_db):
         """Test scraping when fetch fails."""
         mock_fetch.return_value = None
-        result = scrape_source("https://example.com", temp_db)
+        result = scrape_source("https://example.com", temp_db, None, ["sqlite"])
         assert result == 0
 
-    @patch("download.scraper.fetch_url")
-    @patch("download.scraper.extract_quotes")
+    @patch("scraper.scraper.fetch_url")
+    @patch("scraper.scraper.extract_quotes")
     def test_scrape_source_no_quotes_found(self, mock_extract, mock_fetch, temp_db):
         """Test scraping when no quotes are found."""
         mock_fetch.return_value = "content"
         mock_extract.return_value = []
-        result = scrape_source("https://example.com", temp_db)
+        result = scrape_source("https://example.com", temp_db, None, ["sqlite"])
         assert result == 0
 
 
 class TestScrapeAllSources:
     """Tests for scraping multiple sources."""
 
-    @patch("download.scraper.scrape_source")
+    @patch("scraper.scraper.scrape_source")
     def test_scrape_all_sources_success(self, mock_scrape, temp_db):
         """Test scraping multiple sources successfully."""
         mock_scrape.return_value = 5
         sources = ["https://example1.com", "https://example2.com"]
-        total = scrape_all_sources(sources, temp_db)
+        total = scrape_all_sources(sources, temp_db, None, ["sqlite"])
         assert total == 10
         assert mock_scrape.call_count == 2
 
-    @patch("download.scraper.scrape_source")
+    @patch("scraper.scraper.scrape_source")
     def test_scrape_all_sources_with_failures(self, mock_scrape, temp_db):
         """Test scraping with some sources failing."""
         mock_scrape.side_effect = [5, Exception("Error"), 3]
         sources = ["https://1.com", "https://2.com", "https://3.com"]
-        total = scrape_all_sources(sources, temp_db)
+        total = scrape_all_sources(sources, temp_db, None, ["sqlite"])
         assert total == 8  # 5 + 0 (error) + 3
 
-    @patch("download.scraper.scrape_source")
+    @patch("scraper.scraper.scrape_source")
     def test_scrape_all_sources_empty_list(self, mock_scrape, temp_db):
         """Test scraping with empty source list."""
-        total = scrape_all_sources([], temp_db)
+        total = scrape_all_sources([], temp_db, None, ["sqlite"])
         assert total == 0
         mock_scrape.assert_not_called()
 
@@ -524,3 +668,134 @@ class TestExtractQuotesRouting:
         source = "https://unknown-site.com/quotes"
         quotes = extract_quotes(html, source, "html")
         assert len(quotes) >= 1
+
+
+class TestDatabaseMigration:
+    """Test database migration functionality."""
+
+    def test_create_database_migrates_old_schema(self, tmp_path):
+        """Test that create_database migrates from old schema with created_at column."""
+        db_path = tmp_path / "test_migrate.db"
+
+        # Create old schema database manually
+        conn = sqlite3.connect(str(db_path))
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE quotes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                quote TEXT NOT NULL UNIQUE,
+                source TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("INSERT INTO quotes (quote, source) VALUES (?, ?)",
+                      ("Old quote", "old_source"))
+        conn.commit()
+        conn.close()
+
+        # Run create_database which should migrate
+        create_database(str(db_path))
+
+        # Verify migration worked
+        conn = sqlite3.connect(str(db_path))
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(quotes)")
+        columns = [col[1] for col in cursor.fetchall()]
+        assert 'created_at' not in columns
+        assert 'id' in columns
+        assert 'quote' in columns
+        assert 'source' in columns
+
+        # Verify data was preserved
+        cursor.execute("SELECT quote, source FROM quotes")
+        rows = cursor.fetchall()
+        assert len(rows) == 1
+        assert rows[0] == ("Old quote", "old_source")
+        conn.close()
+
+
+class TestFetchUrlEdgeCases:
+    """Test edge cases in fetch_url function."""
+
+    @patch('scraper.scraper.requests.get')
+    @patch('scraper.scraper.comment_out_source')
+    def test_fetch_url_http_404_error(self, mock_comment_out, mock_get):
+        """Test fetch_url handles HTTP 404 errors by commenting out source."""
+        # Create a realistic HTTPError
+        http_error = requests.exceptions.HTTPError("404 Client Error: Not Found")
+        http_error.response = Mock()
+        http_error.response.status_code = 404
+        
+        # Make requests.get raise the HTTPError
+        mock_get.side_effect = http_error
+
+        result = fetch_url("http://example.com/404", retries=1)
+
+        assert result is None
+        mock_comment_out.assert_called_once_with("http://example.com/404", "HTTP 404")
+
+    @patch('scraper.scraper.requests.get')
+    @patch('scraper.scraper.time.sleep')
+    def test_fetch_url_request_exception_final_return_none(self, mock_sleep, mock_get):
+        """Test fetch_url returns None after exhausting retries on RequestException."""
+        mock_get.side_effect = requests.exceptions.RequestException("Network error")
+
+        result = fetch_url("http://example.com/fail", retries=2)
+
+        assert result is None
+        # Should have tried 2 times
+        assert mock_get.call_count == 2
+        # Should have slept once between retries
+        mock_sleep.assert_called_once()
+
+
+class TestExtractQuotesFromJsonBranches:
+    """Test various branches in extract_quotes_from_json."""
+
+    def test_extract_quotes_from_json_single_quote_with_joke_key(self):
+        """Test extracting single quote with 'joke' key."""
+        data = {"joke": "Chuck Norris can make HTTP requests with his mind."}
+        content = json.dumps(data)
+        quotes = extract_quotes_from_json(content, "test_source")
+
+        assert len(quotes) == 1
+        assert quotes[0]["quote"] == "Chuck Norris can make HTTP requests with his mind."
+        assert quotes[0]["source"] == "test_source"
+
+    def test_extract_quotes_from_json_search_results(self):
+        """Test extracting quotes from search results format."""
+        data = {
+            "result": [
+                {"value": "Chuck Norris fact 1"},
+                {"value": "Chuck Norris fact 2"}
+            ]
+        }
+        content = json.dumps(data)
+        quotes = extract_quotes_from_json(content, "test_source")
+
+        assert len(quotes) == 2
+        assert quotes[0]["quote"] == "Chuck Norris fact 1"
+        assert quotes[1]["quote"] == "Chuck Norris fact 2"
+
+    def test_extract_quotes_from_json_list_of_dicts_with_joke(self):
+        """Test extracting from list of dicts with 'joke' key."""
+        data = [
+            {"joke": "Fact 1"},
+            {"joke": "Fact 2"}
+        ]
+        content = json.dumps(data)
+        quotes = extract_quotes_from_json(content, "test_source")
+
+        assert len(quotes) == 2
+        assert quotes[0]["quote"] == "Fact 1"
+        assert quotes[1]["quote"] == "Fact 2"
+
+    def test_extract_quotes_from_json_list_of_strings(self):
+        """Test extracting from list of strings."""
+        data = ["String fact 1", "String fact 2"]
+        content = json.dumps(data)
+        quotes = extract_quotes_from_json(content, "test_source")
+
+        assert len(quotes) == 2
+        assert quotes[0]["quote"] == "String fact 1"
+        assert quotes[1]["quote"] == "String fact 2"
