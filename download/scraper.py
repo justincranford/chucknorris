@@ -597,7 +597,7 @@ def save_quotes_to_csv(quotes: List[Dict[str, str]], csv_path: str) -> int:
     file_exists = Path(csv_path).exists()
 
     with open(csv_path, "a", newline="", encoding="utf-8") as csvfile:
-        fieldnames = ["created_at", "source", "quote"]
+        fieldnames = ["source", "quote"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         # Write header only if file is new
@@ -607,7 +607,6 @@ def save_quotes_to_csv(quotes: List[Dict[str, str]], csv_path: str) -> int:
         saved_count = 0
         for quote_data in quotes:
             writer.writerow({
-                "created_at": datetime.now().isoformat(),
                 "source": quote_data["source"],
                 "quote": quote_data["quote"]
             })
