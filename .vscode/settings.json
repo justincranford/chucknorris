@@ -1,0 +1,37 @@
+{
+    "$schema": "vscode://schemas/settings/user",
+    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.defaultInterpreterPath": "python3",
+    "python.terminal.launchArgs": [],
+    "files.associations": {
+        "*.py": "python"
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/htmlcov": true,
+        "**/.git/objects": true,
+        "**/coverage.*": true,
+        "**/.mypy_cache": true,
+        "**/.pytest_cache": true
+    },
+    "search.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/htmlcov": true,
+        "**/.git/objects": true,
+        "**/coverage.*": true,
+        "**/.mypy_cache": true,
+        "**/.pytest_cache": true
+    },
+    "files.watcherExclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/htmlcov": true,
+        "**/coverage.*": true,
+        "**/.mypy_cache": true,
+        "**/.pytest_cache": true
+    }
+}
