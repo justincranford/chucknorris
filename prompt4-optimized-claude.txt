@@ -1,0 +1,66 @@
+# Optimized Prompt for HTML Scraping Enhancement
+
+## Objective
+Enhance the Chuck Norris quote scraper to support HTML scraping from multiple website sources with custom parsing logic for each site's unique structure.
+
+## Target Sources
+Implement scraping for these 4 validated HTML sources:
+1. `https://parade.com/970343/parade/chuck-norris-jokes/`
+2. `https://www.thefactsite.com/top-100-chuck-norris-facts/`
+3. `https://www.chucknorrisfacts.fr/en/top-100-chuck-norris-facts`
+4. `https://www.factinate.com/quote/chuck-norris-jokes/`
+
+## Implementation Requirements
+
+### Enhanced HTML Parsing
+- **Custom Parsing Logic**: Create site-specific extraction functions for each source due to varying HTML structures
+- **Selector Strategies**:
+  - Parade.com: Target `<p>` tags containing "Chuck Norris" or quote containers
+  - Thefactsite.com: Extract from numbered list items or fact containers
+  - Chucknorrisfacts.fr: Parse French site structure for fact extraction
+  - Factinate.com: Target quote blocks and joke containers
+- **Fallback Mechanisms**: Implement multiple selector strategies per site for robustness
+
+### Source-Specific Functions
+Create dedicated extraction functions:
+```python
+def extract_quotes_from_parade(content: str) -> List[Dict[str, str]]
+def extract_quotes_from_thefactsite(content: str) -> List[Dict[str, str]]
+def extract_quotes_from_chucknorrisfacts_fr(content: str) -> List[Dict[str, str]]
+def extract_quotes_from_factinate(content: str) -> List[Dict[str, str]]
+```
+
+### Integration with Existing Scraper
+- **Update `extract_quotes` Function**: Add source-specific routing based on URL patterns
+- **Modify `extract_quotes_from_html`**: Make it more generic or create wrapper that calls site-specific functions
+- **URL Pattern Matching**: Use domain checking to determine which extraction function to use
+
+### Testing and Validation
+- **Individual Source Testing**: Create unit tests for each source extraction function
+- **Mock HTML Content**: Use saved HTML samples for reliable testing
+- **Quote Validation**: Ensure extracted quotes contain "Chuck Norris" and are properly formatted
+- **Integration Testing**: Test full scraping pipeline with each source
+
+### Error Handling and Resilience
+- **Site Structure Changes**: Implement try/catch blocks for selector failures
+- **Graceful Degradation**: Fall back to generic HTML parsing if custom parsing fails
+- **Logging**: Add detailed logging for parsing successes/failures per source
+- **Rate Limiting**: Respect site robots.txt and implement delays between requests
+
+### Source Management
+- **Update DEFAULT_SOURCES**: Add the 4 new HTML sources to the active sources list
+- **Source Documentation**: Add comments indicating source type (API vs HTML)
+- **Source Prioritization**: Consider ordering sources by reliability/reponse time
+
+### Quality Assurance
+- **Quote Formatting**: Ensure consistent quote formatting across all sources
+- **Deduplication**: Verify existing deduplication works with new sources
+- **Performance**: Monitor scraping performance and add timeouts for slow sites
+- **Coverage**: Maintain 95%+ test coverage including new extraction functions
+
+## Expected Outcomes
+- Scraper successfully extracts quotes from all 4 HTML sources
+- Robust error handling prevents failures when sites change
+- Comprehensive test coverage for all extraction logic
+- Increased quote diversity from multiple source types
+- Maintainable code structure for future source additions

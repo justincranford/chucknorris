@@ -22,7 +22,8 @@ DEFAULT_OUTPUT_DB = "download/quotes.db"
 DEFAULT_SOURCES = [
     "https://api.chucknorris.io/jokes/random",
     "https://api.chucknorris.io/jokes/search?query=all",
-    "https://api.icndb.com/jokes/random",
+    # "https://api.icndb.com/jokes/random",  # NOTE: This is essentially the same as source 1 - commented out
+    # "https://www.rd.com/list/chuck-norris-jokes/",  # DEAD LINK - marked for removal - commented out
 ]
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # seconds
