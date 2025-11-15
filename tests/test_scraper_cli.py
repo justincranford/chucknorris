@@ -241,3 +241,87 @@ class TestMain:
         mock_scrape.assert_called_once()
         call_args = mock_scrape.call_args
         assert call_args[1]['max_workers'] == 8
+
+    @patch("scraper.scraper.scrape_all_sources")
+    @patch("scraper.scraper.create_database")
+    @patch("scraper.scraper.validate_sources")
+    @patch("scraper.scraper.parse_arguments")
+    def test_main_format_both(self, mock_parse, mock_validate, mock_create, mock_scrape):
+        """Test main function with format='both'."""
+        mock_args = MagicMock()
+        mock_args.sources = None
+        mock_args.output = "test.db"
+        mock_args.format = "both"
+        mock_args.verbose = False
+        mock_args.dry_run = False
+        mock_args.threads = 4
+        mock_parse.return_value = mock_args
+
+        mock_validate.return_value = ["https://example.com"]
+        mock_scrape.return_value = 10
+
+        result = main()
+        assert result == 0
+
+        # Verify both formats were used
+        mock_scrape.assert_called_once()
+        call_args = mock_scrape.call_args
+        assert call_args[0][3] == ["sqlite", "csv"]  # formats is the 4th positional arg
+        assert call_args[0][1] == "scraper/quotes.db"  # db_path (default for both)
+        assert call_args[0][2] == "scraper/quotes.csv"  # csv_path (default for both)
+
+    @patch("scraper.scraper.scrape_all_sources")
+    @patch("scraper.scraper.create_database")
+    @patch("scraper.scraper.validate_sources")
+    @patch("scraper.scraper.parse_arguments")
+    def test_main_format_sqlite(self, mock_parse, mock_validate, mock_create, mock_scrape):
+        """Test main function with format='sqlite'."""
+        mock_args = MagicMock()
+        mock_args.sources = None
+        mock_args.output = "custom.db"
+        mock_args.format = "sqlite"
+        mock_args.verbose = False
+        mock_args.dry_run = False
+        mock_args.threads = 4
+        mock_parse.return_value = mock_args
+
+        mock_validate.return_value = ["https://example.com"]
+        mock_scrape.return_value = 10
+
+        result = main()
+        assert result == 0
+
+        # Verify sqlite format was used
+        mock_scrape.assert_called_once()
+        call_args = mock_scrape.call_args
+        assert call_args[0][3] == ["sqlite"]  # formats
+        assert call_args[0][1] == "custom.db"  # db_path
+        assert call_args[0][2] is None  # csv_path
+
+    @patch("scraper.scraper.scrape_all_sources")
+    @patch("scraper.scraper.create_database")
+    @patch("scraper.scraper.validate_sources")
+    @patch("scraper.scraper.parse_arguments")
+    def test_main_format_csv(self, mock_parse, mock_validate, mock_create, mock_scrape):
+        """Test main function with format='csv'."""
+        mock_args = MagicMock()
+        mock_args.sources = None
+        mock_args.output = "custom.csv"
+        mock_args.format = "csv"
+        mock_args.verbose = False
+        mock_args.dry_run = False
+        mock_args.threads = 4
+        mock_parse.return_value = mock_args
+
+        mock_validate.return_value = ["https://example.com"]
+        mock_scrape.return_value = 10
+
+        result = main()
+        assert result == 0
+
+        # Verify csv format was used
+        mock_scrape.assert_called_once()
+        call_args = mock_scrape.call_args
+        assert call_args[0][3] == ["csv"]  # formats
+        assert call_args[0][1] is None  # db_path
+        assert call_args[0][2] == "custom.csv"  # csv_path
