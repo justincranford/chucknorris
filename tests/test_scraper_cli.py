@@ -76,9 +76,7 @@ class TestMain:
     @patch("download.scraper.create_database")
     @patch("download.scraper.validate_sources")
     @patch("download.scraper.parse_arguments")
-    def test_main_success(
-        self, mock_parse, mock_validate, mock_create, mock_scrape
-    ):
+    def test_main_success(self, mock_parse, mock_validate, mock_create, mock_scrape):
         """Test successful main execution."""
         mock_args = MagicMock()
         mock_args.sources = None

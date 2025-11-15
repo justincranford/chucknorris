@@ -1,0 +1,15 @@
+implement HTML scraping for these chuck norris sources:
+- https://parade.com/970343/parade/chuck-norris-jokes/
+- https://www.thefactsite.com/top-100-chuck-norris-facts/
+- https://www.chucknorrisfacts.fr/en/top-100-chuck-norris-facts
+- https://www.factinate.com/quote/chuck-norris-jokes/
+
+the scraper already has HTML parsing, but it needs to be enhanced to properly extract quotes from these specific sites. each site has different HTML structure, so need custom parsing logic for each.
+
+test each source individually to ensure it works and extracts valid chuck norris quotes.
+
+add error handling for when sites change their structure or go down.
+
+update the default sources list to include these new sources.
+
+ensure the extracted quotes are properly formatted and deduplicated.

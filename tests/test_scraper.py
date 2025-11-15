@@ -12,8 +12,12 @@ import requests
 from download.scraper import (
     create_database,
     extract_quotes,
+    extract_quotes_from_chucknorrisfacts_fr,
+    extract_quotes_from_factinate,
     extract_quotes_from_html,
     extract_quotes_from_json,
+    extract_quotes_from_parade,
+    extract_quotes_from_thefactsite,
     fetch_url,
     save_quotes_to_db,
     scrape_all_sources,
@@ -75,7 +79,9 @@ class TestCreateDatabase:
         """Test that quotes table is created with correct schema."""
         conn = sqlite3.connect(temp_db)
         cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='quotes'")
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='quotes'"
+        )
         assert cursor.fetchone() is not None
         conn.close()
 
@@ -83,7 +89,9 @@ class TestCreateDatabase:
         """Test that index on quote column is created."""
         conn = sqlite3.connect(temp_db)
         cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_quote'")
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_quote'"
+        )
         assert cursor.fetchone() is not None
         conn.close()
 
@@ -117,21 +125,26 @@ class TestFetchUrl:
         assert result is None
 
     @patch("download.scraper.requests.get")
-    def test_fetch_url_http_error(self, mock_get):
+    def test_fetch_url_http_error(self, mock_get, caplog):
         """Test URL fetch with HTTP error."""
-        mock_get.side_effect = requests.exceptions.HTTPError()
-        result = fetch_url("https://example.com", retries=1)
+        with caplog.at_level(logging.ERROR):
+            mock_get.side_effect = requests.exceptions.HTTPError()
+            result = fetch_url("https://example.com", retries=1)
         assert result is None
+        assert any("Failed to fetch" in record.message for record in caplog.records)
 
     @patch("download.scraper.requests.get")
     @patch("download.scraper.time.sleep")
-    def test_fetch_url_retry_logic(self, mock_sleep, mock_get):
+    def test_fetch_url_retry_logic(self, mock_sleep, mock_get, caplog):
         """Test retry logic on failure."""
-        mock_get.side_effect = requests.exceptions.RequestException()
-        result = fetch_url("https://example.com", retries=3)
+        with caplog.at_level(logging.WARNING):
+            mock_get.side_effect = requests.exceptions.RequestException()
+            result = fetch_url("https://example.com", retries=3)
         assert result is None
         assert mock_get.call_count == 3
         assert mock_sleep.call_count == 2  # One less than retries
+        assert any("Error fetching" in record.message for record in caplog.records)
+        assert any("Failed to fetch" in record.message for record in caplog.records)
 
 
 class TestExtractQuotesFromJson:
@@ -159,10 +172,12 @@ class TestExtractQuotesFromJson:
         quotes = extract_quotes_from_json(json_string, "test_source")
         assert len(quotes) == expected_count
 
-    def test_extract_quotes_from_json_invalid_json(self):
+    def test_extract_quotes_from_json_invalid_json(self, caplog):
         """Test extraction with invalid JSON."""
-        quotes = extract_quotes_from_json("invalid json", "test_source")
-        assert len(quotes) == 0
+        with caplog.at_level(logging.ERROR):
+            quotes = extract_quotes_from_json("invalid json", "test_source")
+            assert len(quotes) == 0
+            assert "Failed to parse JSON" in caplog.text
 
     def test_extract_quotes_from_json_source_attribution(self):
         """Test that source is properly attributed."""
@@ -198,7 +213,9 @@ class TestExtractQuotesFromHtml:
 
     def test_extract_quotes_from_paragraph_with_chuck_norris(self):
         """Test extraction from paragraphs containing 'Chuck Norris'."""
-        html = "<html><body><p>Chuck Norris can slam a revolving door.</p></body></html>"
+        html = (
+            "<html><body><p>Chuck Norris can slam a revolving door.</p></body></html>"
+        )
         quotes = extract_quotes_from_html(html, "test_source")
         # Should find at least one quote
         assert len(quotes) >= 0
@@ -381,3 +398,129 @@ class TestScrapeAllSources:
         total = scrape_all_sources([], temp_db)
         assert total == 0
         mock_scrape.assert_not_called()
+
+
+class TestExtractQuotesFromParade:
+    """Tests for Parade.com quote extraction."""
+
+    def test_extract_quotes_from_parade_error(self):
+        """Test error handling in Parade.com extraction."""
+        # Malformed HTML that will cause parsing error
+        content = None  # This will cause an exception
+        quotes = extract_quotes_from_parade(content, "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_from_parade_success(self):
+        """Test successful extraction from Parade.com HTML."""
+        html = """
+        <div class="article-body">
+            <p>Chuck Norris can divide by zero. This is an amazing feat.</p>
+            <p>Another Chuck Norris fact here.</p>
+        </div>
+        """
+        source = "https://parade.com/970343/parade/chuck-norris-jokes/"
+        quotes = extract_quotes_from_parade(html, source)
+        assert len(quotes) == 2
+        assert all("Chuck Norris" in quote["quote"] for quote in quotes)
+        assert all(quote["source"] == source for quote in quotes)
+
+    def test_extract_quotes_from_parade_no_quotes(self):
+        """Test extraction with no valid quotes."""
+        html = "<p>This is just regular text.</p>"
+        source = "https://parade.com/970343/parade/chuck-norris-jokes/"
+        quotes = extract_quotes_from_parade(html, source)
+        assert quotes == []
+
+
+class TestExtractQuotesFromThefactsite:
+    """Tests for Thefactsite.com quote extraction."""
+
+    def test_extract_quotes_from_thefactsite_error(self):
+        """Test error handling in Thefactsite.com extraction."""
+        content = None  # This will cause an exception
+        quotes = extract_quotes_from_thefactsite(content, "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_from_thefactsite_success(self):
+        """Test successful extraction from Thefactsite.com HTML."""
+        html = """
+        <ol>
+            <li>1. Chuck Norris can count to infinity. Twice.</li>
+            <li>2. Another Chuck Norris amazing fact.</li>
+        </ol>
+        """
+        source = "https://www.thefactsite.com/top-100-chuck-norris-facts/"
+        quotes = extract_quotes_from_thefactsite(html, source)
+        assert len(quotes) == 2
+        assert all("Chuck Norris" in quote["quote"] for quote in quotes)
+        assert not any(quote["quote"].startswith(("1. ", "2. ")) for quote in quotes)
+
+
+class TestExtractQuotesFromChucknorrisfactsFr:
+    """Tests for Chucknorrisfacts.fr quote extraction."""
+
+    def test_extract_quotes_from_chucknorrisfacts_fr_error(self):
+        """Test error handling in Chucknorrisfacts.fr extraction."""
+        content = None  # This will cause an exception
+        quotes = extract_quotes_from_chucknorrisfacts_fr(content, "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_from_chucknorrisfacts_fr_success(self):
+        """Test successful extraction from Chucknorrisfacts.fr HTML."""
+        html = """
+        <div class="fact">Chuck Norris can speak French fluently. In French.</div>
+        <p>Another Chuck Norris fact in French.</p>
+        """
+        source = "https://www.chucknorrisfacts.fr/en/top-100-chuck-norris-facts"
+        quotes = extract_quotes_from_chucknorrisfacts_fr(html, source)
+        # Should extract from both div.fact and p
+        assert len(quotes) >= 2
+        assert all("Chuck Norris" in quote["quote"] for quote in quotes)
+
+
+class TestExtractQuotesFromFactinate:
+    """Tests for Factinate.com quote extraction."""
+
+    def test_extract_quotes_from_factinate_error(self):
+        """Test error handling in Factinate.com extraction."""
+        content = None  # This will cause an exception
+        quotes = extract_quotes_from_factinate(content, "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_from_factinate_success(self):
+        """Test successful extraction from Factinate.com HTML."""
+        html = """
+        <blockquote>Chuck Norris can make a hormone. This is a fact.</blockquote>
+        <div class="quote">Another Chuck Norris quote here.</div>
+        """
+        source = "https://www.factinate.com/quote/chuck-norris-jokes/"
+        quotes = extract_quotes_from_factinate(html, source)
+        # Should extract from both blockquote and div.quote
+        assert len(quotes) >= 2
+        assert all("Chuck Norris" in quote["quote"] for quote in quotes)
+
+
+class TestExtractQuotesRouting:
+    """Tests for extract_quotes routing to site-specific functions."""
+
+    def test_extract_quotes_routes_to_parade(self):
+        """Test that extract_quotes routes Parade.com to specific function."""
+        html = "<p>Chuck Norris can do anything. Even HTML parsing.</p>"
+        source = "https://parade.com/970343/parade/chuck-norris-jokes/"
+        quotes = extract_quotes(html, source, "html")
+        assert len(quotes) >= 1
+        assert quotes[0]["source"] == source
+
+    def test_extract_quotes_routes_to_thefactsite(self):
+        """Test routing to Thefactsite.com function."""
+        html = "<ol><li>Chuck Norris fact from the site.</li></ol>"
+        source = "https://www.thefactsite.com/top-100-chuck-norris-facts/"
+        quotes = extract_quotes(html, source, "html")
+        assert len(quotes) >= 1
+
+    def test_extract_quotes_routes_to_fallback(self):
+        """Test routing to generic HTML extraction for unknown sites."""
+        html = "<p>Chuck Norris from unknown site.</p>"
+        source = "https://unknown-site.com/quotes"
+        quotes = extract_quotes(html, source, "html")
+        assert len(quotes) >= 1

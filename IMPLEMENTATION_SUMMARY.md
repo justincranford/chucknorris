@@ -24,11 +24,11 @@ A complete, production-ready Python project for scraping and generating Chuck No
 
 ### Key Metrics
 
-✅ **111 tests** - All passing  
-✅ **95.58% code coverage** - Exceeds 95% requirement  
-✅ **Zero linting errors** - Clean code  
-✅ **Type hints** - Full type coverage  
-✅ **Docstrings** - Complete documentation  
+✅ **111 tests** - All passing
+✅ **95.58% code coverage** - Exceeds 95% requirement
+✅ **Zero linting errors** - Clean code
+✅ **Type hints** - Full type coverage
+✅ **Docstrings** - Complete documentation
 
 ### Project Structure
 

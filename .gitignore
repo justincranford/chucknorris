@@ -37,6 +37,8 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+coverage.json
+coverage.lcov
 *.cover
 .hypothesis/
 .pytest_cache/
@@ -63,3 +65,6 @@ Thumbs.db
 *.sqlite
 *.sqlite3
 download/quotes.db
+
+# Logs
+*.log

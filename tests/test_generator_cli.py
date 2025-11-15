@@ -1,5 +1,6 @@
 """Tests for generator CLI and main function."""
 
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest

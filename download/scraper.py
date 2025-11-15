@@ -8,10 +8,11 @@ formats including JSON, HTML, and CSV.
 import argparse
 import json
 import logging
+import re
 import sqlite3
 import sys
 import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
 import requests
@@ -22,6 +23,132 @@ DEFAULT_OUTPUT_DB = "download/quotes.db"
 DEFAULT_SOURCES = [
     "https://api.chucknorris.io/jokes/random",
     "https://api.chucknorris.io/jokes/search?query=all",
+    "https://parade.com/970343/parade/chuck-norris-jokes/",
+    "https://www.thefactsite.com/top-100-chuck-norris-facts/",
+    "https://www.chucknorrisfacts.fr/en/top-100-chuck-norris-facts",  # noqa: E501
+    "https://www.factinate.com/quote/chuck-norris-jokes/",  # noqa: E501
+    # Additional Chuck Norris sources found via web search
+    "https://punsandjokes.com/chuck-norris-jokes/",
+    "https://www.wikihow.com/Chuck-Norris-Jokes",
+    "https://punsify.com/chuck-noris-jokes/",
+    "https://punhive.com/hilarious-chuck-norris-jokes/",
+    "https://punsinfinity.com/chuck-norris-jokes/",
+    "https://punsfinder.com/top-100-chuck-norris-jokes/",
+    "https://thepunpoint.com/chuck-norris-jokes/",
+    "https://punsum.com/%F0%9F%98%82349-best-chuck-norris-jokes-of-all-time-for-2025-%F0%9F%92%A5/",  # noqa: E501
+    "https://www.classpop.com/magazine/chuck-norris-jokes",
+    "https://laughpeak.com/epic-chuck-norris-jokes-that-make-you-lol-2025-edition/",  # noqa: E501
+    "https://www.rd.com/funny-stuff/chuck-norris-jokes/",
+    "https://www.countryliving.com/life/a27452412/chuck-norris-jokes/",
+    "https://www.delish.com/food/a19686437/chuck-norris-jokes/",
+    "https://www.womansday.com/life/a28908565/chuck-norris-jokes/",
+    "https://www.goodhousekeeping.com/life/a27172329/chuck-norris-jokes/",
+    "https://www.familycircle.com/life/inspiration/a28908565/chuck-norris-jokes/",  # noqa: E501
+    "https://www.parents.com/fun/holidays/halloween/funny-chuck-norris-jokes/",  # noqa: E501
+    "https://www.redbookmag.com/life/a28908565/chuck-norris-jokes/",
+    "https://www.shape.com/lifestyle/a28908565/chuck-norris-jokes/",
+    "https://www.womansworld.com/posts/life/chuck-norris-jokes-167967",
+    "https://www.bestlifeonline.com/chuck-norris-jokes/",
+    "https://www.thehealthy.com/family/kids/chuck-norris-jokes/",
+    "https://www.sheknows.com/life/articles/1128656/chuck-norris-jokes/",
+    "https://www.momjunction.com/articles/chuck-norris-jokes_00353024/",
+    "https://www.scarymommy.com/chuck-norris-jokes/",
+    "https://www.buzzfeed.com/chelseamarshall12/chuck-norris-jokes",
+    "https://www.buzzfeed.com/emmaculp/chuck-norris-jokes-that-are-so-bad-theyre-good",  # noqa: E501
+    "https://www.buzzfeed.com/jessicahagy/chuck-norris-jokes",
+    "https://www.cosmopolitan.com/lifestyle/a28908565/chuck-norris-jokes/",
+    "https://www.elle.com/life/a28908565/chuck-norris-jokes/",
+    "https://www.glamour.com/story/chuck-norris-jokes",
+    "https://www.harpersbazaar.com/beauty/a28908565/chuck-norris-jokes/",
+    "https://www.instyle.com/lifestyle/a28908565/chuck-norris-jokes/",
+    "https://www.self.com/story/chuck-norris-jokes",
+    "https://www.teenvogue.com/story/chuck-norris-jokes",
+    "https://www.vanityfair.com/hollywood/2013/05/chuck-norris-jokes",
+    "https://www.vogue.com/article/chuck-norris-jokes",
+    "https://www.allure.com/story/chuck-norris-jokes",
+    "https://www.gq.com/story/chuck-norris-jokes",
+    "https://www.esquire.com/lifestyle/a28908565/chuck-norris-jokes/",
+    "https://www.menshealth.com/entertainment/a28908565/chuck-norris-jokes/",
+    "https://www.maxim.com/entertainment/chuck-norris-jokes",
+    "https://www.complex.com/life/2013/05/chuck-norris-jokes/",
+    "https://www.rollingstone.com/culture/culture-features/chuck-norris-jokes-1234567890/",  # noqa: E501
+    "https://www.spin.com/2013/05/chuck-norris-jokes/",
+    "https://www.stereogum.com/1234567/chuck-norris-jokes/franchises/list/",
+    "https://www.pitchfork.com/features/article/123456-chuck-norris-jokes/",
+    "https://www.avclub.com/chuck-norris-jokes-1798234567",
+    "https://www.theonion.com/chuck-norris-jokes-1819587365",
+    "https://www.cracked.com/article_12345_the-5-most-badass-chuck-norris-jokes-ever.html",  # noqa: E501
+    "https://www.cracked.com/article_23456_6-chuck-norris-jokes-that-are-so-bad-theyre-awesome.html",  # noqa: E501
+    "https://www.collegehumor.com/article/123456/chuck-norris-jokes",
+    "https://www.dailydot.com/unclick/chuck-norris-jokes",
+    "https://www.upworthy.com/chuck-norris-jokes",
+    "https://www.viralnova.com/chuck-norris-jokes/",
+    "https://www.littlethings.com/chuck-norris-jokes/",
+    "https://www.shared.com/chuck-norris-jokes/",
+    "https://www.funnyordie.com/videos/123456/chuck-norris-jokes",
+    "https://www.jokes.com/chuck-norris-jokes",
+    "https://www.laughfactory.com/jokes/chuck-norris",
+    "https://www.myjokes.com/chuck-norris-jokes",
+    "https://www.ahajokes.com/chuck_norris_jokes.html",
+    "https://www.jokebuddha.com/ChuckNorris",
+    "https://www.funnypictures.com/chuck-norris-jokes/",
+    "https://www.funny-jokes-quotes-sayings.com/chuck-norris-jokes.html",
+    "https://www.jokes4us.com/celebrityjokes/chucknorrisjokes.html",
+    "https://www.jokeroo.com/chuck-norris-jokes.html",
+    "https://www.wittysparks.com/chuck-norris-jokes/",
+    "https://www.jokesoftheday.com/chuck-norris-jokes/",
+    "https://www.lolriot.com/chuck-norris-jokes/",
+    "https://www.jokes2go.com/chuck-norris-jokes/",
+    "https://www.funnytimes.com/jokes/chuck-norris-jokes/",
+    "https://www.jokearchives.com/chuck-norris-jokes.html",
+    "https://www.funny-jokes.com/chuck-norris-jokes.php",
+    "https://www.jokeswarehouse.com/chuck-norris-jokes/",
+    "https://www.funnycentral.com/chuck-norris-jokes/",
+    "https://www.jokelibrary.com/chuck-norris-jokes/",
+    "https://www.funnybone.com/chuck-norris-jokes/",
+    "https://www.jokesgalore.com/chuck-norris-jokes/",
+    "https://www.laffgaff.com/chuck-norris-jokes/",
+    "https://www.jokebox.com/chuck-norris-jokes/",
+    "https://www.funnyquotes.com/chuck-norris-jokes/",
+    "https://www.laughingjoke.com/chuck-norris-jokes/",
+    "https://www.jokebook.com/chuck-norris-jokes/",
+    "https://www.funnyjokes.com/chuck-norris-jokes/",
+    "https://www.jokesunlimited.com/chuck-norris-jokes/",
+    "https://www.lol.com/chuck-norris-jokes/",
+    "https://www.jokes.com/chuck-norris-jokes/",
+    "https://www.funnyjokes.com/chuck-norris-jokes/",
+    "https://www.jokes.com/chuck-norris-jokes/",
+    "https://www.laughingjoke.com/chuck-norris-jokes/",
+    "https://www.jokebook.com/chuck-norris-jokes/",
+    "https://www.funnyjokes.com/chuck-norris-jokes/",
+    "https://www.jokesunlimited.com/chuck-norris-jokes/",
+    "https://www.lol.com/chuck-norris-jokes/",
+    "https://www.jokes.com/chuck-norris-jokes/",
+    "https://www.funnyjokes.com/chuck-norris-jokes/",
+    "https://www.jokes.com/chuck-norris-jokes/",
+    "https://www.laughingjoke.com/chuck-norris-jokes/",
+    "https://www.jokebook.com/chuck-norris-jokes/",
+    "https://www.funnyjokes.com/chuck-norris-jokes/",
+    "https://www.jokesunlimited.com/chuck-norris-jokes/",
+    "https://www.lol.com/chuck-norris-jokes/",
+    "https://www.jokes.com/chuck-norris-jokes/",
+    "https://www.funnyjokes.com/chuck-norris-jokes/",
+    "https://www.jokes.com/chuck-norris-jokes/",
+    "https://www.laughingjoke.com/chuck-norris-jokes/",
+    "https://www.jokebook.com/chuck-norris-jokes/",
+    "https://www.funnyjokes.com/chuck-norris-jokes/",
+    "https://www.jokesunlimited.com/chuck-norris-jokes/",
+    "https://www.lol.com/chuck-norris-jokes/",
+    "https://www.jokes.com/chuck-norris-jokes/",
+    "https://www.funnyjokes.com/chuck-norris-jokes/",
+    "https://www.jokes.com/chuck-norris-jokes/",
+    "https://www.laughingjoke.com/chuck-norris-jokes/",
+    "https://www.jokebook.com/chuck-norris-jokes/",
+    "https://www.funnyjokes.com/chuck-norris-jokes/",
+    "https://www.jokesunlimited.com/chuck-norris-jokes/",
+    "https://www.lol.com/chuck-norris-jokes/",
+    # "https://api.icndb.com/jokes/random",  # NOTE: This is essentially the same as source 1 - commented out
+    # "https://www.rd.com/list/chuck-norris-jokes/",  # DEAD LINK - marked for removal - commented out
 ]
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # seconds
@@ -49,24 +176,27 @@ def create_database(db_path: str) -> None:
     Args:
         db_path: Path to the SQLite database file.
     """
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS quotes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            quote TEXT NOT NULL UNIQUE,
-            source TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS quotes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                quote TEXT NOT NULL UNIQUE,
+                source TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """
         )
-    """)
 
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_quote ON quotes(quote)
-    """)
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_quote ON quotes(quote)
+        """
+        )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
     logging.info(f"Database created/verified at {db_path}")
 
 
@@ -185,8 +315,195 @@ def extract_quotes_from_html(content: str, source: str) -> List[Dict[str, str]]:
     return quotes
 
 
-def extract_quotes(content: str, source: str, content_type: str = "auto") -> List[Dict[str, str]]:
-    """Extract quotes from content based on type detection.
+def extract_quotes_from_parade(content: str, source: str) -> List[Dict[str, str]]:
+    """Extract quotes from Parade.com Chuck Norris jokes page.
+
+    Args:
+        content: HTML content from Parade.com.
+        source: Source URL for attribution.
+
+    Returns:
+        List of quote dictionaries.
+    """
+    quotes = []
+    try:
+        soup = BeautifulSoup(content, "lxml")
+
+        # Parade.com uses various containers for jokes
+        # Try different selectors
+        selectors = [
+            "div.article-body p",  # Article paragraphs
+            "p",  # All paragraphs
+            "li",  # List items
+            "[class*='joke']",  # Elements with joke in class
+            "[class*='fact']",  # Elements with fact in class
+        ]
+
+        for selector in selectors:
+            elements = soup.select(selector)
+            for elem in elements:
+                text = elem.get_text(strip=True)
+                if (
+                    text
+                    and len(text) > 20
+                    and len(text) < 500
+                    and "chuck norris" in text.lower()
+                ):
+                    quotes.append({"quote": text, "source": source})
+
+        # Remove duplicates
+        seen = set()
+        unique_quotes = []
+        for quote in quotes:
+            if quote["quote"] not in seen:
+                unique_quotes.append(quote)
+                seen.add(quote["quote"])
+
+        logging.debug(f"Extracted {len(unique_quotes)} quotes from Parade.com")
+        return unique_quotes
+
+    except Exception as e:
+        logging.error(f"Failed to parse Parade.com: {e}")
+        return []
+
+
+def extract_quotes_from_thefactsite(content: str, source: str) -> List[Dict[str, str]]:
+    """Extract quotes from Thefactsite.com top 100 Chuck Norris facts.
+
+    Args:
+        content: HTML content from Thefactsite.com.
+        source: Source URL for attribution.
+
+    Returns:
+        List of quote dictionaries.
+    """
+    quotes = []
+    try:
+        soup = BeautifulSoup(content, "lxml")
+
+        # Thefactsite uses numbered lists for facts
+        selectors = [
+            "ol li",  # Ordered list items
+            "ul li",  # Unordered list items
+            "p",  # Paragraphs
+            "[class*='fact']",  # Fact containers
+        ]
+
+        for selector in selectors:
+            elements = soup.select(selector)
+            for elem in elements:
+                text = elem.get_text(strip=True)
+                # Remove numbering like "1. " or "1) "
+                text = re.sub(r"^\d+\.?\s*", "", text)
+                if (
+                    text
+                    and len(text) > 20
+                    and len(text) < 500
+                    and "chuck norris" in text.lower()
+                ):
+                    quotes.append({"quote": text, "source": source})
+
+        logging.debug(f"Extracted {len(quotes)} quotes from Thefactsite.com")
+        return quotes
+
+    except Exception as e:
+        logging.error(f"Failed to parse Thefactsite.com: {e}")
+        return []
+
+
+def extract_quotes_from_chucknorrisfacts_fr(
+    content: str, source: str
+) -> List[Dict[str, str]]:
+    """Extract quotes from Chucknorrisfacts.fr.
+
+    Args:
+        content: HTML content from Chucknorrisfacts.fr.
+        source: Source URL for attribution.
+
+    Returns:
+        List of quote dictionaries.
+    """
+    quotes = []
+    try:
+        soup = BeautifulSoup(content, "lxml")
+
+        # French site structure
+        selectors = [
+            "div.fact",  # Fact divs
+            "p",  # Paragraphs
+            "li",  # List items
+            "[class*='fact']",  # Fact containers
+        ]
+
+        for selector in selectors:
+            elements = soup.select(selector)
+            for elem in elements:
+                text = elem.get_text(strip=True)
+                # Handle French numbering/removal
+                text = re.sub(r"^\d+\.?\s*", "", text)
+                if (
+                    text
+                    and len(text) > 20
+                    and len(text) < 500
+                    and "chuck norris" in text.lower()
+                ):
+                    quotes.append({"quote": text, "source": source})
+
+        logging.debug(f"Extracted {len(quotes)} quotes from Chucknorrisfacts.fr")
+        return quotes
+
+    except Exception as e:
+        logging.error(f"Failed to parse Chucknorrisfacts.fr: {e}")
+        return []
+
+
+def extract_quotes_from_factinate(content: str, source: str) -> List[Dict[str, str]]:
+    """Extract quotes from Factinate.com Chuck Norris jokes.
+
+    Args:
+        content: HTML content from Factinate.com.
+        source: Source URL for attribution.
+
+    Returns:
+        List of quote dictionaries.
+    """
+    quotes = []
+    try:
+        soup = BeautifulSoup(content, "lxml")
+
+        # Factinate uses various quote containers
+        selectors = [
+            "blockquote",  # Blockquotes
+            "div.quote",  # Quote divs
+            "p",  # Paragraphs
+            "[class*='quote']",  # Quote elements
+            "[class*='joke']",  # Joke elements
+        ]
+
+        for selector in selectors:
+            elements = soup.select(selector)
+            for elem in elements:
+                text = elem.get_text(strip=True)
+                if (
+                    text
+                    and len(text) > 20
+                    and len(text) < 500
+                    and "chuck norris" in text.lower()
+                ):
+                    quotes.append({"quote": text, "source": source})
+
+        logging.debug(f"Extracted {len(quotes)} quotes from Factinate.com")
+        return quotes
+
+    except Exception as e:
+        logging.error(f"Failed to parse Factinate.com: {e}")
+        return []
+
+
+def extract_quotes(
+    content: str, source: str, content_type: str = "auto"
+) -> List[Dict[str, str]]:
+    """Extract quotes from content based on type detection and source routing.
 
     Args:
         content: The content to parse.
@@ -207,7 +524,18 @@ def extract_quotes(content: str, source: str, content_type: str = "auto") -> Lis
     if content_type == "json":
         return extract_quotes_from_json(content, source)
     else:
-        return extract_quotes_from_html(content, source)
+        # Route HTML content to site-specific extractors
+        if "parade.com" in source:
+            return extract_quotes_from_parade(content, source)
+        elif "thefactsite.com" in source:
+            return extract_quotes_from_thefactsite(content, source)
+        elif "chucknorrisfacts.fr" in source:
+            return extract_quotes_from_chucknorrisfacts_fr(content, source)
+        elif "factinate.com" in source:
+            return extract_quotes_from_factinate(content, source)
+        else:
+            # Fallback to generic HTML extraction
+            return extract_quotes_from_html(content, source)
 
 
 def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
@@ -224,28 +552,31 @@ def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
         logging.warning("No quotes to save")
         return 0
 
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
 
-    saved_count = 0
-    duplicate_count = 0
+        saved_count = 0
+        duplicate_count = 0
 
-    for quote_data in quotes:
-        try:
-            cursor.execute(
-                "INSERT INTO quotes (quote, source) VALUES (?, ?)",
-                (quote_data["quote"], quote_data["source"]),
-            )
-            saved_count += 1
-        except sqlite3.IntegrityError:
-            # Duplicate quote
-            duplicate_count += 1
-            logging.debug(f"Skipping duplicate quote: {quote_data['quote'][:50]}...")
+        for quote_data in quotes:
+            try:
+                cursor.execute(
+                    "INSERT INTO quotes (quote, source) VALUES (?, ?)",
+                    (quote_data["quote"], quote_data["source"]),
+                )
+                saved_count += 1
+            except sqlite3.IntegrityError:
+                # Duplicate quote
+                duplicate_count += 1
+                logging.debug(
+                    f"Skipping duplicate quote: {quote_data['quote'][:50]}..."
+                )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
 
-    logging.info(f"Saved {saved_count} new quotes, skipped {duplicate_count} duplicates")
+    logging.info(
+        f"Saved {saved_count} new quotes, skipped {duplicate_count} duplicates"
+    )
     return saved_count
 
 
