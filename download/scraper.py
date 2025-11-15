@@ -821,14 +821,11 @@ def main() -> int:
     # Determine output formats
     if args.format == "both":
         formats = ["sqlite", "csv"]
-        # Use base path without extension for both formats
-        output_base = args.output.rsplit('.', 1)[0] if '.' in args.output else args.output
+        # Use base path without any extension
+        output_base = args.output.split('.')[0]
     else:
         formats = [args.format]
-        if args.format == "sqlite":
-            output_base = args.output.rsplit('.', 1)[0] if args.output.endswith('.db') else args.output
-        else:  # csv
-            output_base = args.output.rsplit('.', 1)[0] if args.output.endswith('.csv') else args.output
+        output_base = args.output.split('.')[0]
 
     # Create database only if SQLite format is included
     if "sqlite" in formats:
