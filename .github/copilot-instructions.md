@@ -17,7 +17,7 @@
 | ------- | --------- | ----------- |
 | '01-01.copilot-tools.instructions.md' | ** | Tool usage guidelines |
 | '01-02.execution.instructions.md' | ** | Execution guidelines for scripts |
-| '01-03.preferred-libraries.instructions.md' | ** | Preferred libraries and dependencies |
+| '01-03.dependencies.instructions.md' | ** | Preferred dependencies and versions |
 | '02-01.project-context.instructions.md' | ** | Project context and overview |
 | '02-02.coding.instructions.md' | ** | Coding standards and style guidelines |
 | '02-03.testing.instructions.md' | ** | Testing requirements and methodologies |
