@@ -191,7 +191,7 @@ repos:
         args: [--no-progress, --cache]
         language: system
         files: '\.(md|txt|py|yaml|yml|json|js|ts|sh|ps1)$'
-        exclude: '^(tests/|\.git/|node_modules/|\.cache/|htmlcov/|\.pytest_cache/)'
+        exclude: '^(tests/|\.git/|node_modules/|\.cache/|htmlcov/|\.pytest_cache/|\.cspellcache$)'
 
   # Conventional commit validation
   - repo: https://github.com/commitizen-tools/commitizen

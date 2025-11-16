@@ -60,6 +60,7 @@
         "**/Thumbs.db": true,
         // Temporary files
         "**/*.log": true,
+        "**/.cspellcache": true,
         "**/*.tmp": true,
         "**/*.swp": true,
         "**/*.swo": true,
@@ -80,6 +81,7 @@
         "**/coverage.*": true,
         "**/.mypy_cache": true,
         "**/.pytest_cache": true
+        ,"**/.cspellcache": true
     },
     "files.watcherExclude": {
         "**/__pycache__": true,
@@ -89,6 +91,7 @@
         "**/coverage.*": true,
         "**/.mypy_cache": true,
         "**/.pytest_cache": true
+        ,"**/.cspellcache": true
     },
 
     // Markdown Settings
@@ -140,7 +143,7 @@
         "/^docker container exec.*/": false,
         "/^docker (run|exec).*/": false,
         "/^(rm|Remove-Item|del)\\b/i.*/": false,
-        "/^(code|pre-commit|golangci-lint|gofumpt|goimports|gremlins|act|cspell).*/": true,
+        "/^(code|pre-commit|act|cspell).*/": true,
         "/^git (status|add|log|reflog|diff|branch|worktree|checkout|merge|stash|stash pop|stash list|fetch|mv|commit|rev-parse|restore|describe).*/": true,
         "/^(python|python3|pip|pip3|pytest|codecov|black|isort|flake8|mypy|sphinx-build)\\b.*/": true,
         "/^docker compose (up|down|logs|ps|build|pull|start|stop|restart|config).*/": true,

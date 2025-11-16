@@ -6,19 +6,25 @@ on:
   pull_request:
     branches: [ main, master, develop ]
 
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+  actions: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
     - uses: ./.github/actions/project-setup
-
     - uses: ./.github/actions/project-lint
 
   test:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
     - uses: ./.github/actions/project-setup
-
     - uses: ./.github/actions/project-test

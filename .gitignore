@@ -12,7 +12,7 @@
 **/*.dylib
 
 # Distribution / packaging
-.Python
+**/.Python
 **/develop-eggs/
 **/eggs/
 **/.eggs/
@@ -25,26 +25,26 @@
 **/.installed.cfg
 
 # PyInstaller
-*.manifest
-*.spec
-__pycache__/
-*.py[cod]
-*$py.class
+**/*.manifest
+**/*.spec
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
 
 # Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-coverage.json
-coverage.lcov
-*.cover
-.hypothesis/
-.pytest_cache/
+**/htmlcov/
+**/.tox/
+**/.nox/
+**/.coverage
+**/.coverage.*
+**/.cache
+**/nosetests.xml
+**/coverage.xml
+**/coverage.json
+**/coverage.lcov
+**/*.cover
+**/.hypothesis/
+**/.pytest_cache/
 
 # Virtual environments
 **/venv/
@@ -64,3 +64,6 @@ coverage.lcov
 
 # Logs
 **/*.log
+
+# Spell checker cache
+**/.cspellcache

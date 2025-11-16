@@ -371,40 +371,6 @@ jobs:
 
 ---
 
-## 🔧 What Needs Improvement
-
-### 1. **Caching (High Priority)**
-
-**Issue:** No caching of pip dependencies, pre-commit hooks, or other artifacts.
-
-**Current:**
-```yaml
-- name: Install dependencies
-  run: |
-    python -m pip install --upgrade pip
-    pip install -e .[dev]
-```
-
-**Improved:**
-```yaml
-- name: Cache pip packages
-  uses: actions/cache@v4
-  with:
-    path: ~/.cache/pip
-    key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
-    restore-keys: |
-      ${{ runner.os }}-pip-
-
-- name: Install dependencies
-  run: |
-    python -m pip install --upgrade pip
-    pip install -e .[dev]
-```
-
-**Impact:** Faster CI runs (50-70% reduction in dependency installation time).
-
----
-
 ### 2. **Concurrent Job Execution**
 
 **Issue:** `lint` and `test` jobs run sequentially (no dependencies specified).
