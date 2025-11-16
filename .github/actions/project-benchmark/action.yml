@@ -10,10 +10,44 @@ runs:
         pytest tests/benchmark --benchmark-json=benchmark.json
       shell: bash
 
-    - name: Upload benchmark artifact
+    - name: Convert benchmark JSON to CSV and HTML
+      run: |
+        if [ -f benchmark.json ]; then
+            python - <<'PY'
+            import json,csv,html
+            with open('benchmark.json','r',encoding='utf-8') as f:
+              data=json.load(f)
+              benches=data.get('benchmarks', [])
+              # write CSV
+              with open('benchmark.csv','w',encoding='utf-8',newline='') as csvfile:
+                writer=csv.writer(csvfile)
+                writer.writerow(['name','group','rounds','iterations','mean','min','max','stddev','unit'])
+                for b in benches:
+                  s=b.get('stats',{})
+                  writer.writerow([b.get('name'), b.get('group',''), s.get('rounds'), s.get('iterations'), s.get('mean'), s.get('min'), s.get('max'), s.get('stddev'), b.get('unit')])
+              # write simple HTML
+              with open('benchmark.html','w',encoding='utf-8') as h:
+                h.write('<html><body><table border="1"><tr>')
+                h.write(''.join(['<th>'+c+'</th>' for c in ['name','group','rounds','iterations','mean','min','max','stddev','unit']]))
+                h.write('</tr>')
+                for b in benches:
+                  s=b.get('stats',{})
+                  h.write('<tr>')
+                  h.write(''.join(['<td>{}</td>'.format(x) for x in [b.get('name'), b.get('group',''), s.get('rounds'), s.get('iterations'), s.get('mean'), s.get('min'), s.get('max'), s.get('stddev'), b.get('unit')]]))
+                  h.write('</tr>')
+                h.write('</table></body></html>')
+            PY
+          else
+            echo 'No benchmark.json found'
+          fi
+      shell: bash
+
+    - name: Upload benchmark artifacts
       uses: actions/upload-artifact@v4
       with:
         name: benchmark-results
         path: |
           benchmark.json
-        retention-days: 7
+          benchmark.csv
+          benchmark.html
+        retention-days: 1
