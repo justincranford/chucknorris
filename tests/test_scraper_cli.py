@@ -1,9 +1,7 @@
 """Tests for scraper CLI and main function."""
 
-import sys
+import sys  # noqa: F401
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from scraper.scraper import main, parse_arguments, setup_logging
 
@@ -126,9 +124,7 @@ class TestMain:
     @patch("scraper.scraper.create_database")
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_no_valid_sources(
-        self, mock_parse, mock_validate, mock_create, mock_scrape
-    ):
+    def test_main_no_valid_sources(self, mock_parse, mock_validate, mock_create, mock_scrape):
         """Test main with no valid sources."""
         mock_args = MagicMock()
         mock_args.sources = ["invalid"]
@@ -147,9 +143,7 @@ class TestMain:
     @patch("scraper.scraper.create_database")
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_no_quotes_saved(
-        self, mock_parse, mock_validate, mock_create, mock_scrape
-    ):
+    def test_main_no_quotes_saved(self, mock_parse, mock_validate, mock_create, mock_scrape):
         """Test main when no quotes are saved."""
         mock_args = MagicMock()
         mock_args.sources = None
@@ -170,9 +164,7 @@ class TestMain:
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.load_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_uses_default_sources(
-        self, mock_parse, mock_load, mock_validate, mock_create, mock_scrape
-    ):
+    def test_main_uses_default_sources(self, mock_parse, mock_load, mock_validate, mock_create, mock_scrape):
         """Test that main uses default sources when none provided."""
         mock_args = MagicMock()
         mock_args.sources = None
@@ -187,6 +179,8 @@ class TestMain:
         mock_scrape.return_value = 5
 
         result = main()
+
+        assert result == 0
 
         # Verify default sources were used
         mock_validate.assert_called_once()
@@ -240,7 +234,7 @@ class TestMain:
         # Verify scrape_all_sources was called with correct thread count
         mock_scrape.assert_called_once()
         call_args = mock_scrape.call_args
-        assert call_args[1]['max_workers'] == 8
+        assert call_args[1]["max_workers"] == 8
 
     @patch("scraper.scraper.scrape_all_sources")
     @patch("scraper.scraper.create_database")

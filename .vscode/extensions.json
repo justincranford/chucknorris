@@ -1,5 +1,4 @@
 {
-  // Schema: vscode://schemas/extensions
   "recommendations": [
     "github.copilot", // GitHub: Your AI pair programmer
     "github.copilot-chat", // GitHub: AI chat features powered by Copilot

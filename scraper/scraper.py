@@ -236,7 +236,7 @@ def create_database(db_path: str) -> None:
             # Check columns
             cursor.execute("PRAGMA table_info(quotes)")
             columns = [col[1] for col in cursor.fetchall()]
-            if 'created_at' in columns:
+            if "created_at" in columns:
                 # Migrate: create new table without created_at, copy data, drop old
                 logging.info("Migrating database: removing created_at column")
 
@@ -250,9 +250,7 @@ def create_database(db_path: str) -> None:
                 """
                 )
 
-                cursor.execute(
-                    "INSERT INTO quotes_new (quote, source) SELECT quote, source FROM quotes"
-                )
+                cursor.execute("INSERT INTO quotes_new (quote, source) SELECT quote, source FROM quotes")
 
                 cursor.execute("DROP TABLE quotes")
                 cursor.execute("ALTER TABLE quotes_new RENAME TO quotes")
@@ -304,7 +302,7 @@ def fetch_url(url: str, retries: int = MAX_RETRIES) -> Optional[str]:
             response.raise_for_status()
             return response.text
         except requests.exceptions.HTTPError as e:
-            if '404' in str(e):
+            if "404" in str(e):
                 comment_out_source(url, "HTTP 404")
             logging.warning(f"Error fetching {url}: {e}")
             if attempt < retries - 1:
@@ -437,12 +435,7 @@ def extract_quotes_from_parade(content: str, source: str) -> List[Dict[str, str]
             elements = soup.select(selector)
             for elem in elements:
                 text = elem.get_text(strip=True)
-                if (
-                    text
-                    and len(text) > 20
-                    and len(text) < 500
-                    and "chuck norris" in text.lower()
-                ):
+                if text and len(text) > 20 and len(text) < 500 and "chuck norris" in text.lower():
                     quotes.append({"quote": text, "source": source})
 
         # Remove duplicates
@@ -489,12 +482,7 @@ def extract_quotes_from_thefactsite(content: str, source: str) -> List[Dict[str,
                 text = elem.get_text(strip=True)
                 # Remove numbering like "1. " or "1) "
                 text = re.sub(r"^\d+\.?\s*", "", text)
-                if (
-                    text
-                    and len(text) > 20
-                    and len(text) < 500
-                    and "chuck norris" in text.lower()
-                ):
+                if text and len(text) > 20 and len(text) < 500 and "chuck norris" in text.lower():
                     quotes.append({"quote": text, "source": source})
 
         logging.debug(f"Extracted {len(quotes)} quotes from Thefactsite.com")
@@ -505,9 +493,7 @@ def extract_quotes_from_thefactsite(content: str, source: str) -> List[Dict[str,
         return []
 
 
-def extract_quotes_from_chucknorrisfacts_fr(
-    content: str, source: str
-) -> List[Dict[str, str]]:
+def extract_quotes_from_chucknorrisfacts_fr(content: str, source: str) -> List[Dict[str, str]]:
     """Extract quotes from Chucknorrisfacts.fr.
 
     Args:
@@ -535,12 +521,7 @@ def extract_quotes_from_chucknorrisfacts_fr(
                 text = elem.get_text(strip=True)
                 # Handle French numbering/removal
                 text = re.sub(r"^\d+\.?\s*", "", text)
-                if (
-                    text
-                    and len(text) > 20
-                    and len(text) < 500
-                    and "chuck norris" in text.lower()
-                ):
+                if text and len(text) > 20 and len(text) < 500 and "chuck norris" in text.lower():
                     quotes.append({"quote": text, "source": source})
 
         logging.debug(f"Extracted {len(quotes)} quotes from Chucknorrisfacts.fr")
@@ -578,12 +559,7 @@ def extract_quotes_from_factinate(content: str, source: str) -> List[Dict[str, s
             elements = soup.select(selector)
             for elem in elements:
                 text = elem.get_text(strip=True)
-                if (
-                    text
-                    and len(text) > 20
-                    and len(text) < 500
-                    and "chuck norris" in text.lower()
-                ):
+                if text and len(text) > 20 and len(text) < 500 and "chuck norris" in text.lower():
                     quotes.append({"quote": text, "source": source})
 
         logging.debug(f"Extracted {len(quotes)} quotes from Factinate.com")
@@ -594,9 +570,7 @@ def extract_quotes_from_factinate(content: str, source: str) -> List[Dict[str, s
         return []
 
 
-def extract_quotes(
-    content: str, source: str, content_type: str = "auto"
-) -> List[Dict[str, str]]:
+def extract_quotes(content: str, source: str, content_type: str = "auto") -> List[Dict[str, str]]:
     """Extract quotes from content based on type detection and source routing.
 
     Args:
@@ -661,10 +635,7 @@ def save_quotes_to_csv(quotes: List[Dict[str, str]], csv_path: str) -> int:
 
         saved_count = 0
         for quote_data in quotes:
-            writer.writerow({
-                "source": quote_data["source"],
-                "quote": quote_data["quote"]
-            })
+            writer.writerow({"source": quote_data["source"], "quote": quote_data["quote"]})
             saved_count += 1
 
     logging.info(f"Saved {saved_count} quotes to CSV file: {csv_path}")
@@ -701,15 +672,11 @@ def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
             except sqlite3.IntegrityError:
                 # Duplicate quote
                 duplicate_count += 1
-                logging.debug(
-                    f"Skipping duplicate quote: {quote_data['quote'][:50]}..."
-                )
+                logging.debug(f"Skipping duplicate quote: {quote_data['quote'][:50]}...")
 
         conn.commit()
 
-    logging.info(
-        f"Saved {saved_count} new quotes, skipped {duplicate_count} duplicates"
-    )
+    logging.info(f"Saved {saved_count} new quotes, skipped {duplicate_count} duplicates")
     return saved_count
 
 
@@ -780,10 +747,7 @@ def scrape_all_sources(sources: List[str], db_path: Optional[str], csv_path: Opt
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all scraping tasks
-            future_to_source = {
-                executor.submit(scrape_source, source, db_path, csv_path, formats): source
-                for source in sources
-            }
+            future_to_source = {executor.submit(scrape_source, source, db_path, csv_path, formats): source for source in sources}
 
             # Collect results as they complete
             for future in concurrent.futures.as_completed(future_to_source):

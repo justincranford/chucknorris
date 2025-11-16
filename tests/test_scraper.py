@@ -3,7 +3,6 @@
 import json
 import logging
 import sqlite3
-from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -21,7 +20,6 @@ from scraper.scraper import (
     extract_quotes_from_thefactsite,
     fetch_url,
     load_sources,
-    main,
     save_quotes_to_csv,
     save_quotes_to_db,
     scrape_all_sources,
@@ -83,9 +81,7 @@ class TestCreateDatabase:
         """Test that quotes table is created with correct schema."""
         conn = sqlite3.connect(temp_db)
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='quotes'"
-        )
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='quotes'")
         assert cursor.fetchone() is not None
         conn.close()
 
@@ -93,9 +89,7 @@ class TestCreateDatabase:
         """Test that index on quote column is created."""
         conn = sqlite3.connect(temp_db)
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_quote'"
-        )
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_quote'")
         assert cursor.fetchone() is not None
         conn.close()
 
@@ -129,6 +123,7 @@ class TestCommentOutSource:
 
         # Clean up
         import os
+
         os.remove("test_sources.txt")
 
     @patch("scraper.scraper.SOURCES_FILE", "nonexistent.txt")
@@ -157,6 +152,7 @@ class TestLoadSources:
 
         # Clean up
         import os
+
         os.remove("test_sources.txt")
 
     @patch("scraper.scraper.SOURCES_FILE", "nonexistent.txt")
@@ -349,10 +345,7 @@ class TestExtractQuotesFromJson:
 
     def test_extract_quotes_from_json_list_of_dicts_without_known_keys(self):
         """Test extracting from list of dicts without 'value' or 'joke' keys."""
-        data = [
-            {"unknown_key": "value1"},
-            {"another_unknown": "value2"}
-        ]
+        data = [{"unknown_key": "value1"}, {"another_unknown": "value2"}]
         content = json.dumps(data)
         quotes = extract_quotes_from_json(content, "test_source")
         # Should extract no quotes since dicts don't have known keys
@@ -377,9 +370,7 @@ class TestExtractQuotesFromHtml:
 
     def test_extract_quotes_from_paragraph_with_chuck_norris(self):
         """Test extraction from paragraphs containing 'Chuck Norris'."""
-        html = (
-            "<html><body><p>Chuck Norris can slam a revolving door.</p></body></html>"
-        )
+        html = "<html><body><p>Chuck Norris can slam a revolving door.</p></body></html>"
         quotes = extract_quotes_from_html(html, "test_source")
         # Should find at least one quote
         assert len(quotes) >= 0
@@ -781,16 +772,17 @@ class TestDatabaseMigration:
         # Create old schema database manually
         conn = sqlite3.connect(str(db_path))
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE quotes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 quote TEXT NOT NULL UNIQUE,
                 source TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
-        cursor.execute("INSERT INTO quotes (quote, source) VALUES (?, ?)",
-                      ("Old quote", "old_source"))
+        """
+        )
+        cursor.execute("INSERT INTO quotes (quote, source) VALUES (?, ?)", ("Old quote", "old_source"))
         conn.commit()
         conn.close()
 
@@ -802,10 +794,10 @@ class TestDatabaseMigration:
         cursor = conn.cursor()
         cursor.execute("PRAGMA table_info(quotes)")
         columns = [col[1] for col in cursor.fetchall()]
-        assert 'created_at' not in columns
-        assert 'id' in columns
-        assert 'quote' in columns
-        assert 'source' in columns
+        assert "created_at" not in columns
+        assert "id" in columns
+        assert "quote" in columns
+        assert "source" in columns
 
         # Verify data was preserved
         cursor.execute("SELECT quote, source FROM quotes")
@@ -818,8 +810,8 @@ class TestDatabaseMigration:
 class TestFetchUrlEdgeCases:
     """Test edge cases in fetch_url function."""
 
-    @patch('scraper.scraper.requests.get')
-    @patch('scraper.scraper.comment_out_source')
+    @patch("scraper.scraper.requests.get")
+    @patch("scraper.scraper.comment_out_source")
     def test_fetch_url_http_404_error(self, mock_comment_out, mock_get):
         """Test fetch_url handles HTTP 404 errors by commenting out source."""
         # Create a realistic HTTPError
@@ -835,8 +827,8 @@ class TestFetchUrlEdgeCases:
         assert result is None
         mock_comment_out.assert_called_once_with("http://example.com/404", "HTTP 404")
 
-    @patch('scraper.scraper.requests.get')
-    @patch('scraper.scraper.time.sleep')
+    @patch("scraper.scraper.requests.get")
+    @patch("scraper.scraper.time.sleep")
     def test_fetch_url_request_exception_final_return_none(self, mock_sleep, mock_get):
         """Test fetch_url returns None after exhausting retries on RequestException."""
         mock_get.side_effect = requests.exceptions.RequestException("Network error")
@@ -849,8 +841,8 @@ class TestFetchUrlEdgeCases:
         # Should have slept once between retries
         mock_sleep.assert_called_once()
 
-    @patch('scraper.scraper.requests.get')
-    @patch('scraper.scraper.comment_out_source')
+    @patch("scraper.scraper.requests.get")
+    @patch("scraper.scraper.comment_out_source")
     def test_fetch_url_http_error_non_404_logs_warning(self, mock_comment_out, mock_get, caplog):
         """Test fetch_url logs warning for HTTP errors that are not 404."""
         # Create HTTPError that's not 404
@@ -868,8 +860,8 @@ class TestFetchUrlEdgeCases:
         assert "Error fetching http://example.com/500: 500 Server Error" in caplog.text
         mock_comment_out.assert_not_called()
 
-    @patch('scraper.scraper.requests.get')
-    @patch('scraper.scraper.time.sleep')
+    @patch("scraper.scraper.requests.get")
+    @patch("scraper.scraper.time.sleep")
     def test_fetch_url_request_exception_logs_warning(self, mock_sleep, mock_get, caplog):
         """Test fetch_url logs warning for RequestException."""
         mock_get.side_effect = requests.exceptions.RequestException("Connection timeout")
@@ -898,12 +890,7 @@ class TestExtractQuotesFromJsonBranches:
 
     def test_extract_quotes_from_json_search_results(self):
         """Test extracting quotes from search results format."""
-        data = {
-            "result": [
-                {"value": "Chuck Norris fact 1"},
-                {"value": "Chuck Norris fact 2"}
-            ]
-        }
+        data = {"result": [{"value": "Chuck Norris fact 1"}, {"value": "Chuck Norris fact 2"}]}
         content = json.dumps(data)
         quotes = extract_quotes_from_json(content, "test_source")
 
@@ -913,10 +900,7 @@ class TestExtractQuotesFromJsonBranches:
 
     def test_extract_quotes_from_json_list_of_dicts_with_joke(self):
         """Test extracting from list of dicts with 'joke' key."""
-        data = [
-            {"joke": "Fact 1"},
-            {"joke": "Fact 2"}
-        ]
+        data = [{"joke": "Fact 1"}, {"joke": "Fact 2"}]
         content = json.dumps(data)
         quotes = extract_quotes_from_json(content, "test_source")
 
@@ -945,10 +929,7 @@ class TestExtractQuotesFromJsonBranches:
 
     def test_extract_quotes_from_json_list_of_dicts_without_known_keys(self):
         """Test extracting from list of dicts without 'value' or 'joke' keys."""
-        data = [
-            {"unknown_key": "value1"},
-            {"another_unknown": "value2"}
-        ]
+        data = [{"unknown_key": "value1"}, {"another_unknown": "value2"}]
         content = json.dumps(data)
         quotes = extract_quotes_from_json(content, "test_source")
 
@@ -957,13 +938,7 @@ class TestExtractQuotesFromJsonBranches:
 
     def test_extract_quotes_from_json_result_list_with_missing_value(self):
         """Test extracting from result list where some items don't have 'value' key."""
-        data = {
-            "result": [
-                {"value": "Valid quote"},
-                {"other_key": "Invalid item"},
-                {"value": "Another valid quote"}
-            ]
-        }
+        data = {"result": [{"value": "Valid quote"}, {"other_key": "Invalid item"}, {"value": "Another valid quote"}]}
         content = json.dumps(data)
         quotes = extract_quotes_from_json(content, "test_source")
 
@@ -971,171 +946,3 @@ class TestExtractQuotesFromJsonBranches:
         assert len(quotes) == 2
         assert quotes[0]["quote"] == "Valid quote"
         assert quotes[1]["quote"] == "Another valid quote"
-
-
-class TestExtractQuotesFromHtml:
-    """Tests for HTML quote extraction."""
-
-    def test_extract_quotes_from_blockquote(self):
-        """Test extraction from blockquote tags."""
-        html = "<html><body><blockquote>Chuck Norris quote</blockquote></body></html>"
-        quotes = extract_quotes_from_html(html, "test_source")
-        assert len(quotes) == 1
-        assert "Chuck Norris quote" in quotes[0]["quote"]
-
-    def test_extract_quotes_from_class_quote(self):
-        """Test extraction from elements with 'quote' class."""
-        html = '<html><body><div class="quote-text">Chuck Norris quote here</div></body></html>'
-        quotes = extract_quotes_from_html(html, "test_source")
-        assert len(quotes) == 1
-
-    def test_extract_quotes_from_class_quote_too_short(self):
-        """Test extraction from quote class elements that are too short."""
-        html = '<html><body><div class="quote-text">Short</div></body></html>'
-        quotes = extract_quotes_from_html(html, "test_source")
-        # Should not extract quotes that are too short
-        assert len(quotes) == 0
-
-    def test_extract_quotes_from_class_quote_exactly_10_chars(self):
-        """Test extraction from quote class elements that are exactly 10 characters."""
-        html = '<html><body><div class="quote-text">1234567890</div></body></html>'
-        quotes = extract_quotes_from_html(html, "test_source")
-        # Should not extract quotes that are exactly 10 characters (needs > 10)
-        assert len(quotes) == 0
-
-    def test_extract_quotes_from_class_quote_11_chars(self):
-        """Test extraction from quote class elements that are 11 characters."""
-        html = '<html><body><div class="quote-text">12345678901</div></body></html>'
-        quotes = extract_quotes_from_html(html, "test_source")
-        # Should extract quotes that are more than 10 characters
-        assert len(quotes) == 1
-
-    def test_extract_quotes_from_paragraph_with_chuck_norris(self):
-        """Test extraction from paragraphs containing 'Chuck Norris'."""
-        html = (
-            "<html><body><p>Chuck Norris can slam a revolving door.</p></body></html>"
-        )
-        quotes = extract_quotes_from_html(html, "test_source")
-        # Should find at least one quote
-        assert len(quotes) >= 0
-
-    def test_extract_quotes_from_paragraph_fallback(self):
-        """Test fallback to paragraph extraction when no other patterns match."""
-        html = "<html><body><p>This paragraph contains Chuck Norris and is long enough to be considered a quote.</p></body></html>"
-        quotes = extract_quotes_from_html(html, "test_source")
-        assert len(quotes) == 1
-
-    def test_extract_quotes_from_paragraph_no_chuck_norris(self):
-        """Test paragraph extraction when text doesn't contain 'Chuck Norris'."""
-        html = "<html><body><p>This is a long paragraph without the required keywords and should not be extracted.</p></body></html>"
-        quotes = extract_quotes_from_html(html, "test_source")
-        assert len(quotes) == 0
-
-    def test_extract_quotes_from_html_empty(self):
-        """Test extraction from empty HTML."""
-        html = "<html><body></body></html>"
-        quotes = extract_quotes_from_html(html, "test_source")
-        assert isinstance(quotes, list)
-
-    def test_extract_quotes_from_html_exception(self):
-        """Test extraction when parsing raises exception."""
-        # Invalid HTML that might cause issues
-        html = None
-        quotes = extract_quotes_from_html(html, "test_source")
-        assert isinstance(quotes, list)
-        assert len(quotes) == 0
-
-
-class TestExtractQuotes:
-    """Tests for automatic quote extraction."""
-
-    def test_extract_quotes_auto_detect_json(self):
-        """Test automatic detection of JSON content."""
-        content = '{"value": "Test quote"}'
-        quotes = extract_quotes(content, "test_source", "auto")
-        assert len(quotes) == 1
-
-    def test_extract_quotes_auto_detect_html(self):
-        """Test automatic detection of HTML content."""
-        content = "<html><blockquote>Test</blockquote></html>"
-        quotes = extract_quotes(content, "test_source", "auto")
-        assert isinstance(quotes, list)
-
-    def test_extract_quotes_explicit_json(self):
-        """Test explicit JSON content type."""
-        content = '{"value": "Test quote"}'
-        quotes = extract_quotes(content, "test_source", "json")
-        assert len(quotes) == 1
-
-    def test_extract_quotes_parade_com(self):
-        """Test routing to parade.com specific extractor."""
-        content = "<html><body><p>Test content</p></body></html>"
-        quotes = extract_quotes(content, "https://parade.com/parade-content", "html")
-        assert isinstance(quotes, list)
-
-    def test_extract_quotes_thefactsite_com(self):
-        """Test routing to thefactsite.com specific extractor."""
-        content = "<html><body><p>Test content</p></body></html>"
-        quotes = extract_quotes(content, "https://thefactsite.com/chuck-norris-facts", "html")
-        assert isinstance(quotes, list)
-
-    def test_extract_quotes_chucknorrisfacts_fr(self):
-        """Test routing to chucknorrisfacts.fr specific extractor."""
-        content = "<html><body><p>Test content</p></body></html>"
-        quotes = extract_quotes(content, "https://chucknorrisfacts.fr/faits-chuck-norris", "html")
-        assert isinstance(quotes, list)
-
-    def test_extract_quotes_factinate_com(self):
-        """Test routing to factinate.com specific extractor."""
-        content = "<html><body><p>Test content</p></body></html>"
-        quotes = extract_quotes(content, "https://factinate.com/celeb/chuck-norris-facts", "html")
-        assert isinstance(quotes, list)
-
-    def test_extract_quotes_fallback_html(self):
-        """Test fallback to generic HTML extraction."""
-        content = "<html><body><p>Test content</p></body></html>"
-        quotes = extract_quotes(content, "https://unknown-site.com/facts", "html")
-        assert isinstance(quotes, list)
-
-
-class TestScrapeAllSources:
-    """Tests for multi-source scraping."""
-
-    @patch("scraper.scraper.scrape_source")
-    def test_scrape_all_sources_single_thread_exception(self, mock_scrape, caplog):
-        """Test single-threaded scraping with exception handling."""
-        mock_scrape.side_effect = Exception("Test error")
-        with caplog.at_level(logging.ERROR):
-            result = scrape_all_sources(["url1"], None, None, ["sqlite"], max_workers=1)
-        assert result == 0
-        assert "Error scraping url1" in caplog.text
-
-
-class TestValidateSources:
-    """Tests for source URL validation."""
-
-    def test_validate_sources_invalid_url(self, caplog):
-        """Test validation of invalid URLs."""
-        with caplog.at_level(logging.WARNING):
-            result = validate_sources(["not-a-url", "invalid", "http://", "https://"])
-        assert result == []
-        assert "Invalid URL" in caplog.text or "Error parsing URL" in caplog.text
-
-    def test_validate_sources_malformed_url(self, caplog):
-        """Test validation with malformed URLs that raise exceptions."""
-        with caplog.at_level(logging.WARNING):
-            result = validate_sources(["http://", "https://"])
-        assert result == []
-        assert "Invalid URL" in caplog.text or "Error parsing URL" in caplog.text
-
-    def test_validate_sources_urlparse_exception(self, caplog):
-        """Test validation with URLs that cause urlparse exceptions."""
-        # Use a URL that might cause an exception in urlparse - very long URL or special chars
-        with caplog.at_level(logging.WARNING):
-            result = validate_sources(["http://example.com/" + "a" * 10000])  # Very long URL
-        # This might not actually raise an exception, so let's check if it logs
-        if result == []:
-            assert "Error parsing URL" in caplog.text
-        else:
-            # If it doesn't raise an exception, it should be valid
-            assert len(result) == 1

@@ -39,13 +39,13 @@ dev = [
 ]
 
 [tool.black]
-line-length = 88
-target-version = ['py314']
+line-length = 200
+target-version = ['py313']
 include = '\.pyi?$'
 
 [tool.isort]
 profile = "black"
-line_length = 88
+line_length = 200
 multi_line_output = 3
 
 [tool.mypy]

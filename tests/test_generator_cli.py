@@ -1,9 +1,7 @@
 """Tests for generator CLI and main function."""
 
-import sys
+import sys  # noqa: F401
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from quotes.generator import main, parse_arguments, setup_logging, validate_arguments
 
@@ -117,9 +115,7 @@ class TestMain:
     @patch("quotes.generator.generate_quotes")
     @patch("quotes.generator.validate_database")
     @patch("quotes.generator.parse_arguments")
-    def test_main_success(
-        self, mock_parse, mock_validate_db, mock_generate, mock_export
-    ):
+    def test_main_success(self, mock_parse, mock_validate_db, mock_generate, mock_export):
         """Test successful main execution."""
         mock_args = MagicMock()
         mock_args.count = 10
@@ -165,9 +161,7 @@ class TestMain:
     @patch("quotes.generator.generate_quotes")
     @patch("quotes.generator.validate_database")
     @patch("quotes.generator.parse_arguments")
-    def test_main_no_quotes_generated(
-        self, mock_parse, mock_validate_db, mock_generate
-    ):
+    def test_main_no_quotes_generated(self, mock_parse, mock_validate_db, mock_generate):
         """Test main when no quotes are generated."""
         mock_args = MagicMock()
         mock_args.count = 10
@@ -186,9 +180,7 @@ class TestMain:
     @patch("quotes.generator.generate_quotes")
     @patch("quotes.generator.validate_database")
     @patch("quotes.generator.parse_arguments")
-    def test_main_with_all_options(
-        self, mock_parse, mock_validate_db, mock_generate, mock_export
-    ):
+    def test_main_with_all_options(self, mock_parse, mock_validate_db, mock_generate, mock_export):
         """Test main with all options specified."""
         mock_args = MagicMock()
         mock_args.count = 100

@@ -145,10 +145,7 @@ def generate_quotes(
     actual_count = min(count, len(all_ids))
 
     if actual_count < count:
-        logging.warning(
-            f"Requested {count} quotes, but only {len(all_ids)} available. "
-            f"Generating {actual_count} quotes."
-        )
+        logging.warning(f"Requested {count} quotes, but only {len(all_ids)} available. " f"Generating {actual_count} quotes.")
 
     # Sample quote IDs
     if count > len(all_ids):
@@ -169,9 +166,7 @@ def generate_quotes(
     return quotes
 
 
-def export_quotes_text(
-    quotes: List[Dict[str, Any]], output: Optional[TextIO] = None
-) -> None:
+def export_quotes_text(quotes: List[Dict[str, Any]], output: Optional[TextIO] = None) -> None:
     """Export quotes in plain text format.
 
     Args:
@@ -187,9 +182,7 @@ def export_quotes_text(
         logging.debug(f"Exported {len(quotes)} quotes in text format")
 
 
-def export_quotes_json(
-    quotes: List[Dict[str, Any]], output: Optional[TextIO] = None
-) -> None:
+def export_quotes_json(quotes: List[Dict[str, Any]], output: Optional[TextIO] = None) -> None:
     """Export quotes in JSON format.
 
     Args:
@@ -216,9 +209,7 @@ def export_quotes_json(
         logging.debug(f"Exported {len(quotes)} quotes in JSON format")
 
 
-def export_quotes_csv(
-    quotes: List[Dict[str, Any]], output: Optional[TextIO] = None
-) -> None:
+def export_quotes_csv(quotes: List[Dict[str, Any]], output: Optional[TextIO] = None) -> None:
     """Export quotes in CSV format.
 
     Args:
@@ -321,9 +312,7 @@ Examples:
         "--count",
         type=int,
         default=DEFAULT_COUNT,
-        help=(
-            f"Number of quotes to generate (default: {DEFAULT_COUNT}, max: {MAX_COUNT:,})"  # noqa: E501
-        ),
+        help=(f"Number of quotes to generate (default: {DEFAULT_COUNT}, max: {MAX_COUNT:,})"),  # noqa: E501
     )
 
     parser.add_argument(

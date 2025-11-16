@@ -5,21 +5,11 @@ import json
 import logging
 import sqlite3
 from io import StringIO
-from pathlib import Path
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
 import pytest
 
-from quotes.generator import (
-    export_quotes,
-    export_quotes_csv,
-    export_quotes_json,
-    export_quotes_text,
-    generate_quotes,
-    get_all_quote_ids,
-    get_quote_by_id,
-    validate_database,
-)
+from quotes.generator import export_quotes, export_quotes_csv, export_quotes_json, export_quotes_text, generate_quotes, get_all_quote_ids, get_quote_by_id, validate_database
 
 
 @pytest.fixture
@@ -47,9 +37,7 @@ def temp_db_with_quotes(tmp_path):
             ("When Chuck Norris does a pushup, he pushes the Earth down.", "source3"),
         ]
 
-        cursor.executemany(
-            "INSERT INTO quotes (quote, source) VALUES (?, ?)", sample_quotes
-        )
+        cursor.executemany("INSERT INTO quotes (quote, source) VALUES (?, ?)", sample_quotes)
         conn.commit()
 
     return str(db_path)
@@ -87,9 +75,7 @@ class TestValidateDatabase:
         with caplog.at_level(logging.ERROR):
             result = validate_database(str(db_path))
         assert result is False
-        assert any(
-            "Database file not found" in record.message for record in caplog.records
-        )
+        assert any("Database file not found" in record.message for record in caplog.records)
 
     def test_validate_database_empty(self, tmp_path):
         """Test validation of empty database."""
@@ -239,9 +225,7 @@ class TestGenerateQuotes:
         assert quotes == []
 
     @patch("quotes.generator.get_quote_by_id")
-    def test_generate_quotes_with_missing_quote(
-        self, mock_get_quote, temp_db_with_quotes
-    ):
+    def test_generate_quotes_with_missing_quote(self, mock_get_quote, temp_db_with_quotes):
         """Test generating quotes when some quotes are missing from DB."""
 
         # Mock get_quote_by_id to return None for id 2
