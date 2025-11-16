@@ -3,7 +3,14 @@
   "ignorePaths": [
     "docs/dictionaries/",
     "htmlcov/",
-    "coverage.*"
+    "coverage.*",
+    "tests/",
+    ".git/",
+    "node_modules/",
+    ".cache/",
+    "htmlcov/",
+    ".pytest_cache/",
+    ".cspellcache"
   ],
   "dictionaries": [
     // ===== DICTIONARIES WITH .txt FILES =====

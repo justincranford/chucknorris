@@ -191,7 +191,9 @@ repos:
         args: [--no-progress, --cache]
         language: system
         files: '\.(md|txt|py|yaml|yml|json|js|ts|sh|ps1)$'
-        exclude: '^(tests/|\.git/|node_modules/|\.cache/|htmlcov/|\.pytest_cache/|\.cspellcache$)'
+        # Use `.vscode/cspell.json::ignorePaths` as the canonical ignore list for editor and CI.
+        # Keep a minimal pre-commit exclude for performance; main ignorePaths are in cspell.json
+        exclude: '^(\.git/|node_modules/|\.cache/|\.cspellcache$)'
 
   # Conventional commit validation
   - repo: https://github.com/commitizen-tools/commitizen
