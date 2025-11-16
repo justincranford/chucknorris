@@ -374,43 +374,9 @@ jobs:
 
 
 
-### 5. **Artifact Retention**
+<!-- Artifact Retention guidance removed; covered in workflows and CI artifacts are now set to 1 day -->
 
-**Issue:** No specified retention period for artifacts (defaults to 90 days).
-
-**Recommendation:** Optimize storage costs:
-
-```yaml
-- name: Upload coverage artifacts
-  uses: actions/upload-artifact@v4
-  with:
-    name: coverage-reports
-    path: |
-      htmlcov/
-      coverage.xml
-    retention-days: 30  # Reduce from default 90 days
-```
-
----
-
-### 2. **Artifact Retention**
-
-**Issue:** No specified retention period for artifacts (defaults to 90 days).
-
-**Recommendation:** Optimize storage costs:
-
-```yaml
-- name: Upload coverage artifacts
-  uses: actions/upload-artifact@v4
-  with:
-    name: coverage-reports
-    path: |
-      htmlcov/
-      coverage.xml
-    retention-days: 1  # Reduce to 1 day while in early development
-```
-
----
+<!-- Artifact Retention section removed - retention configured to 1 day where artifacts are uploaded -->
 
 ## 📊 Comparison with Best Practices
 
