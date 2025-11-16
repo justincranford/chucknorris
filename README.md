@@ -13,7 +13,7 @@ A Python-based project to scrape Chuck Norris quotes from various online databas
 
 ## Requirements
 
-- Python 3.9 or higher
+- Python 3.14 or higher
 - pip (Python package installer)
 
 ## Installation
@@ -47,6 +47,109 @@ A Python-based project to scrape Chuck Norris quotes from various online databas
    pre-commit install
    ```
 
+## Quick Start
+
+### 1. Scrape Chuck Norris Quotes
+
+```bash
+python scraper/scraper.py -v
+```
+
+This will download quotes from the Chuck Norris API and store them in `scraper/quotes.db`.
+
+### 2. Generate Random Quotes
+
+```bash
+# Generate a single quote
+python quotes/generator.py
+
+# Generate 10 quotes
+python quotes/generator.py --count 10
+
+# Generate JSON output
+python quotes/generator.py --count 5 --format json
+```
+
+### 3. Run Tests
+
+```bash
+# Run all tests with coverage
+pytest --cov=scraper --cov=quotes
+
+# Run specific test file
+pytest tests/test_scraper.py -v
+
+# Run tests with coverage report
+pytest --cov=scraper --cov=quotes --cov-report=html
+```
+
+### Example Outputs
+
+#### Text Format (default)
+
+```text
+Chuck Norris can divide by zero.
+Chuck Norris counted to infinity. Twice.
+```
+
+#### JSON Format
+
+```json
+[
+  {
+    "id": 1,
+    "quote": "Chuck Norris can divide by zero.",
+    "source": "https://api.chucknorris.io/jokes/random",
+    "created_at": "2025-11-14 12:00:00"
+  }
+]
+```
+
+#### CSV Format
+
+```csv
+id,quote,source,created_at
+1,"Chuck Norris can divide by zero.","https://api.chucknorris.io/jokes/random","2025-11-14 12:00:00"
+```
+
+### Advanced Usage
+
+#### Scraper Options
+
+```bash
+# Custom output location
+python scraper/scraper.py --output ./data/quotes.db
+
+# Scrape from custom sources
+python scraper/scraper.py --sources https://example.com/api/quotes
+
+# Enable verbose logging
+python scraper/scraper.py -v
+```
+
+#### More Generator Options
+
+```bash
+# Generate with specific seed for reproducibility
+python quotes/generator.py --count 100 --seed 42
+
+# Save to file
+python quotes/generator.py --count 1000 --output quotes.txt
+
+# Use custom database
+python quotes/generator.py --database ./data/quotes.db --count 10
+```
+
+### Need Help?
+
+```bash
+# Scraper help
+python scraper/scraper.py --help
+
+# Generator help
+python quotes/generator.py --help
+```
+
 ## Usage
 
 ### Quote Scraper
@@ -54,13 +157,13 @@ A Python-based project to scrape Chuck Norris quotes from various online databas
 Scrape Chuck Norris quotes from online sources and store them in a database:
 
 ```bash
-python download/scraper.py
+python scraper/scraper.py
 ```
 
 #### Options
 
 - `-s, --sources`: List of URLs or sources to scrape (space-separated)
-- `-o, --output`: Output database file path (default: `download/quotes.db`)
+- `-o, --output`: Output database file path (default: `scraper/quotes.db`)
 - `-f, --format`: Output format (default: `sqlite`)
 - `-v, --verbose`: Enable verbose logging
 - `-h, --help`: Display help and usage examples
@@ -69,16 +172,16 @@ python download/scraper.py
 
 ```bash
 # Scrape from default sources
-python download/scraper.py
+python scraper/scraper.py
 
 # Specify custom output location
-python download/scraper.py --output ./my_quotes.db
+python scraper/scraper.py --output ./my_quotes.db
 
 # Enable verbose logging
-python download/scraper.py --verbose
+python scraper/scraper.py --verbose
 
 # Scrape from specific sources
-python download/scraper.py --sources https://api.chucknorris.io/jokes/random
+python scraper/scraper.py --sources https://api.chucknorris.io/jokes/random
 ```
 
 ### Quote Generator
@@ -95,7 +198,7 @@ python quotes/generator.py
 - `-s, --seed`: Random seed for reproducible output (default: None for truly random)
 - `-o, --output`: Output file path (default: stdout)
 - `-f, --format`: Output format - `text`, `json`, or `csv` (default: `text`)
-- `-d, --database`: Path to the quotes database (default: `download/quotes.db`)
+- `-d, --database`: Path to the quotes database (default: `scraper/quotes.db`)
 - `-v, --verbose`: Enable verbose logging
 - `-h, --help`: Display help and usage examples
 
@@ -132,7 +235,7 @@ pytest
 Run tests with coverage report:
 
 ```bash
-pytest --cov=download --cov=quotes --cov-report=html
+pytest --cov=scraper --cov=quotes --cov-report=html
 ```
 
 View coverage report:
@@ -166,8 +269,11 @@ chucknorris/
 ├── .github/
 │   ├── workflows/          # CI/CD pipelines
 │   └── copilot-instructions.md
-├── download/
-│   └── scraper.py          # Quote scraping script
+├── scraper/
+│   ├── scraper.py          # Quote scraping script
+│   ├── quotes.db           # Scraped quotes database
+│   ├── quotes.csv          # Scraped quotes CSV
+│   └── sources.txt         # List of sources to scrape
 ├── quotes/
 │   └── generator.py        # Quote generation script
 ├── scripts/                # Utility scripts
@@ -183,7 +289,7 @@ chucknorris/
 
 ## API Documentation
 
-### Scraper Module (`download/scraper.py`)
+### Scraper Module (`scraper/scraper.py`)
 
 The scraper module provides functionality to extract, transform, and load Chuck Norris quotes from various online sources.
 

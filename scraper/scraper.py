@@ -473,7 +473,7 @@ def extract_quotes_from_thefactsite(content: str, source: str) -> List[Dict[str,
     """
     quotes: List[Dict[str, str]] = []
     try:
-        soup = BeautifulSoup(content, "lxml")
+        soup = BeautifulSoup(content, "html.parser")
 
         # Thefactsite uses numbered lists for facts
         selectors = [

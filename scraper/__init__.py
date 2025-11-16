@@ -1,1 +1,1 @@
-"""Make download a package."""
+"""Make scraper a package."""
