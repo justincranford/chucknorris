@@ -48,22 +48,21 @@ A Python-based project to scrape Chuck Norris quotes from various online databas
    pre-commit install --hook-type commit-msg
    ```
 
-## Developer setup (quick)
+## Developer setup (minimal)
 
-To set up the dev environment, install dev dependencies and register the repository-level hooks in one step, run:
-
-```bash
-pip install -e .[dev]
-dev-setup
-```
-
-Alternatively, if you have `make` installed, use:
+Minimal one-liner to install dev dependencies and register the single `pre-commit` hook within `.githooks`:
 
 ```bash
-make dev-setup
+python -m pip install -e .[dev] && dev-setup
 ```
 
-The `dev-setup` console script installs dev dependencies, sets `core.hooksPath` to `.githooks` (so Git runs the single hook script), and validates hooks by running `pre-commit run --all-files -j 4`.
+Notes:
+
+- `dev-setup` is a console script that installs dev dependencies, sets `core.hooksPath` to `.githooks`, and validates hooks by running `pre-commit run --all-files -j 4`.
+
+- We intentionally avoid `pre-commit install --install-hooks` to keep a single canonical hook script; `dev-setup` marks `.githooks/pre-commit` executable and registers it with Git.
+
+- `pip install` cannot safely run arbitrary repo scripts automatically for security reasons, so an explicit `dev-setup` invocation is required.
 
 ## Quick Start
 
