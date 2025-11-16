@@ -1,7 +1,9 @@
 {
   "language": "en,en-CA,en-US,fr,fr-FR,es,es-ES",
   "ignorePaths": [
-    "docs/dictionaries/"
+    "docs/dictionaries/",
+    "htmlcov/",
+    "coverage.*"
   ],
   "dictionaries": [
     // ===== DICTIONARIES WITH .txt FILES =====
@@ -216,6 +218,9 @@
     "Zscifu",
     "Zsviup",
     "ZURL",
-    "Zylia"
+    "Zylia",
+    "thefactsite",
+    "chucknorrisfacts",
+    "factinate"
   ]
 }
