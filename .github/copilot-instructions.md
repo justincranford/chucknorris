@@ -5,8 +5,10 @@
 - Keep instructions short and self-contained
 - Each instruction should be a single, simple statement
 - Each instruction should not be verbose
-- Do reference external resources in instructions
+- Do NOT duplicate information across instructions
+- Do include external links to documentation when relevant
 - Store instructions in properly structured files for version control and team sharing
+- Keep reference links up to date between instruction files and project files (e.g., README.md)
 
 ## Instruction File Structure
 
@@ -25,5 +27,3 @@
 | '04-03.coding.instructions.md' | ** | Coding standards and style guidelines |
 | '04-04.testing.instructions.md' | ** | Testing requirements and methodologies |
 | '04-05.data-integrity.instructions.md' | ** | Data integrity requirements and deduplication |
-| '03-01.git.instructions.md' | ** | Guidelines for making changes and commits |
-| '03-02.github.instructions.md' | ** | GitHub workflow and best practices |
