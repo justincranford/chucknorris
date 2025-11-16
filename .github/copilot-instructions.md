@@ -16,14 +16,14 @@
 | File | Applies To | Description |
 | ------- | --------- | ----------- |
 | '01-01.vscode-extensions.md' | ** | VS Code extension recommendations |
-| '01-02.copilot-extension-tools.instructions.md' | ** | Tool usage guidelines |
-| '01-03.scripts.instructions.md' | ** | Execution guidelines for scripts |
-| '01-04.dependencies.instructions.md' | ** | Preferred dependencies and versions |
+| '01-02.copilot-tools.instructions.md' | ** | Tool usage guidelines |
 | '02-01.git.instructions.md' | ** | Guidelines for making changes and commits |
 | '02-02.github.instructions.md' | ** | GitHub workflow and best practices |
-| '03-01.project.instructions.md' | ** | Project context and overview |
-| '03-02.coding.instructions.md' | ** | Coding standards and style guidelines |
-| '03-03.testing.instructions.md' | ** | Testing requirements and methodologies |
-| '03-04.data-integrity.instructions.md' | ** | Data integrity requirements and deduplication |
+| '03-01.scripts.instructions.md' | ** | Execution guidelines for scripts |
+| '04-01.project.instructions.md' | ** | Project context and overview |
+| '04-02.dependencies.instructions.md' | ** | Preferred dependencies and versions |
+| '04-03.coding.instructions.md' | ** | Coding standards and style guidelines |
+| '04-04.testing.instructions.md' | ** | Testing requirements and methodologies |
+| '04-05.data-integrity.instructions.md' | ** | Data integrity requirements and deduplication |
 | '03-01.git.instructions.md' | ** | Guidelines for making changes and commits |
 | '03-02.github.instructions.md' | ** | GitHub workflow and best practices |
