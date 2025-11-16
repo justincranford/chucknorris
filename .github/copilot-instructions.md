@@ -13,7 +13,7 @@
 **Naming Convention**:
 `##-##.semantic-name.instructions.md` (Tier-Priority format)
 
-| File | Applies To | Description |
+| File | **Applies To** | Description |
 | ------- | --------- | ----------- |
 | '01-01.copilot-tools.instructions.md' | tools | Tool usage guidelines |
 | '01-02.execution.instructions.md' | execution | Execution guidelines for scripts |
