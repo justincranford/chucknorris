@@ -35,6 +35,7 @@
             "args": ["-NoLogo", "-ExecutionPolicy", "RemoteSigned"]
         }
     }, // Configure PowerShell terminal to suppress banner and set execution policy
+    "terminal.integrated.shellIntegration.enabled": false, // Disable shell integration to prevent conflicts
 
     // Diff Editor Settings
     "diffEditor.ignoreTrimWhitespace": true, // Ignore trimmed whitespace in diff

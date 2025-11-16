@@ -13,5 +13,5 @@
     "streetsidesoftware.code-spell-checker", // Spell checking docs/instructions
     "gruntfuggly.todo-tree",  // Surface TODO items in docs/todos files
   ],
-  "unwantedRecommendations": []
+  "unwantedRecommendations": ["gitkraken.gitkraken"]
 }
