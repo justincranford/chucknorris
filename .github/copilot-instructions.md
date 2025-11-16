@@ -23,3 +23,4 @@
 | '02-03.testing.instructions.md' | python | Testing requirements and methodologies |
 | '02-04.data-integrity.instructions.md' | python | Data integrity requirements and deduplication |
 | '03-01.git.instructions.md' | development | Guidelines for making changes and commits |
+| '03-02.github.instructions.md' | github | GitHub workflow and best practices |
