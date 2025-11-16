@@ -10,13 +10,13 @@ class TestSetupLogging:
     """Tests for setup_logging function."""
 
     @patch("scraper.scraper.logging.basicConfig")
-    def test_setup_logging_not_verbose(self, mock_config):
+    def test_setup_logging_not_verbose(self, mock_config: MagicMock):
         """Test logging setup when not verbose."""
         setup_logging(verbose=False)
         mock_config.assert_called_once()
 
     @patch("scraper.scraper.logging.basicConfig")
-    def test_setup_logging_verbose(self, mock_config):
+    def test_setup_logging_verbose(self, mock_config: MagicMock):
         """Test logging setup when verbose."""
         setup_logging(verbose=True)
         mock_config.assert_called_once()
@@ -27,7 +27,7 @@ class TestParseArguments:
 
     def test_parse_arguments_defaults(self):
         """Test default argument values."""
-        with patch("sys.argv", ["scraper.py"]):
+        with patch.object(sys, "argv", ["scraper.py"]):
             args = parse_arguments()
             assert args.output == "scraper/quotes.db"
             assert args.format == "both"
@@ -38,22 +38,19 @@ class TestParseArguments:
 
     def test_parse_arguments_with_sources(self):
         """Test parsing with custom sources."""
-        with patch(
-            "sys.argv",
-            ["scraper.py", "--sources", "https://example.com", "https://test.com"],
-        ):
+        with patch.object(sys, "argv", ["scraper.py", "--sources", "https://example.com", "https://test.com"]):
             args = parse_arguments()
             assert args.sources == ["https://example.com", "https://test.com"]
 
     def test_parse_arguments_with_output(self):
         """Test parsing with custom output."""
-        with patch("sys.argv", ["scraper.py", "--output", "custom.db"]):
+        with patch.object(sys, "argv", ["scraper.py", "--output", "custom.db"]):
             args = parse_arguments()
             assert args.output == "custom.db"
 
     def test_parse_arguments_verbose(self):
         """Test parsing verbose flag."""
-        with patch("sys.argv", ["scraper.py", "-v"]):
+        with patch.object(sys, "argv", ["scraper.py", "-v"]):
             args = parse_arguments()
             assert args.verbose is True
 
@@ -70,31 +67,49 @@ class TestParseArguments:
 
     def test_parse_arguments_dry_run(self):
         """Test dry-run flag parsing."""
-        with patch("sys.argv", ["scraper.py", "--dry-run"]):
+        with patch.object(sys, "argv", ["scraper.py", "--dry-run"]):
             args = parse_arguments()
             assert args.dry_run is True
 
-        with patch("sys.argv", ["scraper.py", "--dryrun"]):
+        with patch.object(sys, "argv", ["scraper.py", "--dryrun"]):
             args = parse_arguments()
             assert args.dry_run is True
 
-        with patch("sys.argv", ["scraper.py", "-d"]):
+        with patch.object(sys, "argv", ["scraper.py", "-d"]):
             args = parse_arguments()
             assert args.dry_run is True
 
     def test_parse_arguments_threads(self):
         """Test threads parameter parsing."""
-        with patch("sys.argv", ["scraper.py", "--threads", "8"]):
+        with patch.object(sys, "argv", ["scraper.py", "--threads", "8"]):
             args = parse_arguments()
             assert args.threads == 8
 
-        with patch("sys.argv", ["scraper.py", "--thread", "2"]):
+        with patch.object(sys, "argv", ["scraper.py", "--thread", "2"]):
             args = parse_arguments()
             assert args.threads == 2
 
-        with patch("sys.argv", ["scraper.py", "-t", "1"]):
+        with patch.object(sys, "argv", ["scraper.py", "-t", "1"]):
             args = parse_arguments()
             assert args.threads == 1
+
+    def test_parse_arguments_refresh_flag(self):
+        """Test parsing refresh flag options."""
+        with patch.object(sys, "argv", ["scraper.py"]):
+            args = parse_arguments()
+            assert args.refresh is False
+
+        with patch.object(sys, "argv", ["scraper.py", "-r"]):
+            args = parse_arguments()
+            assert args.refresh is True
+
+        with patch.object(sys, "argv", ["scraper.py", "--refresh"]):
+            args = parse_arguments()
+            assert args.refresh is True
+
+        with patch.object(sys, "argv", ["scraper.py", "-refresh"]):
+            args = parse_arguments()
+            assert args.refresh is True
 
 
 class TestMain:
@@ -104,7 +119,7 @@ class TestMain:
     @patch("scraper.scraper.create_database")
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_success(self, mock_parse, mock_validate, mock_create, mock_scrape):
+    def test_main_success(self, mock_parse: MagicMock, mock_validate: MagicMock, mock_create: MagicMock, mock_scrape: MagicMock):
         """Test successful main execution."""
         mock_args = MagicMock()
         mock_args.sources = None
@@ -124,7 +139,7 @@ class TestMain:
     @patch("scraper.scraper.create_database")
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_no_valid_sources(self, mock_parse, mock_validate, mock_create, mock_scrape):
+    def test_main_no_valid_sources(self, mock_parse: MagicMock, mock_validate: MagicMock, mock_create: MagicMock, mock_scrape: MagicMock):
         """Test main with no valid sources."""
         mock_args = MagicMock()
         mock_args.sources = ["invalid"]
@@ -143,7 +158,7 @@ class TestMain:
     @patch("scraper.scraper.create_database")
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_no_quotes_saved(self, mock_parse, mock_validate, mock_create, mock_scrape):
+    def test_main_no_quotes_saved(self, mock_parse: MagicMock, mock_validate: MagicMock, mock_create: MagicMock, mock_scrape: MagicMock):
         """Test main when no quotes are saved."""
         mock_args = MagicMock()
         mock_args.sources = None
@@ -164,7 +179,7 @@ class TestMain:
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.load_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_uses_default_sources(self, mock_parse, mock_load, mock_validate, mock_create, mock_scrape):
+    def test_main_uses_default_sources(self, mock_parse: MagicMock, mock_load: MagicMock, mock_validate: MagicMock, mock_create: MagicMock, mock_scrape: MagicMock):
         """Test that main uses default sources when none provided."""
         mock_args = MagicMock()
         mock_args.sources = None
@@ -190,7 +205,7 @@ class TestMain:
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.load_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_dry_run(self, mock_parse, mock_load, mock_validate):
+    def test_main_dry_run(self, mock_parse: MagicMock, mock_load: MagicMock, mock_validate: MagicMock):
         """Test main function in dry-run mode."""
         mock_args = MagicMock()
         mock_args.sources = None
@@ -215,7 +230,7 @@ class TestMain:
     @patch("scraper.scraper.create_database")
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_with_threading(self, mock_parse, mock_validate, mock_create, mock_scrape):
+    def test_main_with_threading(self, mock_parse: MagicMock, mock_validate: MagicMock, mock_create: MagicMock, mock_scrape: MagicMock):
         """Test main function with custom thread count."""
         mock_args = MagicMock()
         mock_args.sources = None
@@ -240,7 +255,7 @@ class TestMain:
     @patch("scraper.scraper.create_database")
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_format_both(self, mock_parse, mock_validate, mock_create, mock_scrape):
+    def test_main_format_both(self, mock_parse: MagicMock, mock_validate: MagicMock, mock_create: MagicMock, mock_scrape: MagicMock):
         """Test main function with format='both'."""
         mock_args = MagicMock()
         mock_args.sources = None
@@ -268,7 +283,7 @@ class TestMain:
     @patch("scraper.scraper.create_database")
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_format_sqlite(self, mock_parse, mock_validate, mock_create, mock_scrape):
+    def test_main_format_sqlite(self, mock_parse: MagicMock, mock_validate: MagicMock, mock_create: MagicMock, mock_scrape: MagicMock):
         """Test main function with format='sqlite'."""
         mock_args = MagicMock()
         mock_args.sources = None
@@ -296,7 +311,7 @@ class TestMain:
     @patch("scraper.scraper.create_database")
     @patch("scraper.scraper.validate_sources")
     @patch("scraper.scraper.parse_arguments")
-    def test_main_format_csv(self, mock_parse, mock_validate, mock_create, mock_scrape):
+    def test_main_format_csv(self, mock_parse: MagicMock, mock_validate: MagicMock, mock_create: MagicMock, mock_scrape: MagicMock):
         """Test main function with format='csv'."""
         mock_args = MagicMock()
         mock_args.sources = None
@@ -319,3 +334,101 @@ class TestMain:
         assert call_args[0][3] == ["csv"]  # formats
         assert call_args[0][1] is None  # db_path
         assert call_args[0][2] == "custom.csv"  # csv_path
+
+    @patch("scraper.scraper.scrape_all_sources")
+    @patch("scraper.scraper.create_database")
+    @patch("scraper.scraper.validate_sources")
+    @patch("scraper.scraper.get_scraped_sources")
+    @patch("scraper.scraper.load_sources")
+    @patch("scraper.scraper.parse_arguments")
+    def test_main_skips_already_scraped_sources(
+        self, mock_parse: MagicMock, mock_load: MagicMock, mock_get_scraped: MagicMock, mock_validate: MagicMock, mock_create: MagicMock, mock_scrape: MagicMock
+    ):
+        """When not using --refresh and using default sources, scraped sources are skipped."""
+        mock_args = MagicMock()
+        mock_args.sources = None
+        mock_args.output = "test.db"
+        mock_args.verbose = False
+        mock_args.dry_run = False
+        mock_args.threads = 4
+        mock_args.refresh = False
+        mock_parse.return_value = mock_args
+
+        mock_load.return_value = ["https://api.chucknorris.io/jokes/random", "https://example.com"]
+        mock_get_scraped.return_value = {"https://api.chucknorris.io/jokes/random"}
+
+        mock_validate.return_value = ["https://example.com"]
+        mock_scrape.return_value = 5
+
+        from scraper.scraper import logging as scraper_logging
+
+        with patch.object(scraper_logging, "info") as mock_info:
+            result = main()
+            assert result == 0
+            # Should log about skipping
+            called = any("Skipping" in args[0] and "already-scraped" in args[0] for args in [c.args for c in mock_info.call_args_list])
+            assert called
+
+        mock_validate.assert_called_once()
+        call_args = mock_validate.call_args[0][0]
+        assert "https://api.chucknorris.io/jokes/random" not in call_args
+        assert "https://example.com" in call_args
+
+    @patch("scraper.scraper.scrape_all_sources")
+    @patch("scraper.scraper.create_database")
+    @patch("scraper.scraper.validate_sources")
+    @patch("scraper.scraper.get_scraped_sources")
+    @patch("scraper.scraper.load_sources")
+    @patch("scraper.scraper.parse_arguments")
+    def test_main_refresh_overrides_skips(self, mock_parse: MagicMock, mock_load: MagicMock, mock_get_scraped: MagicMock, mock_validate: MagicMock, mock_create: MagicMock, mock_scrape: MagicMock):
+        """When using --refresh, do not skip any sources from sources.txt."""
+        mock_args = MagicMock()
+        mock_args.sources = None
+        mock_args.output = "test.db"
+        mock_args.verbose = False
+        mock_args.dry_run = False
+        mock_args.threads = 4
+        mock_args.refresh = True
+        mock_parse.return_value = mock_args
+
+        mock_load.return_value = ["https://api.chucknorris.io/jokes/random", "https://example.com"]
+        mock_get_scraped.return_value = {"https://api.chucknorris.io/jokes/random"}
+
+        mock_validate.return_value = ["https://api.chucknorris.io/jokes/random", "https://example.com"]
+        mock_scrape.return_value = 5
+
+        result = main()
+        assert result == 0
+
+        mock_validate.assert_called_once()
+        call_args = mock_validate.call_args[0][0]
+        assert "https://api.chucknorris.io/jokes/random" in call_args
+        assert "https://example.com" in call_args
+
+    @patch("scraper.scraper.scrape_all_sources")
+    @patch("scraper.scraper.create_database")
+    @patch("scraper.scraper.validate_sources")
+    @patch("scraper.scraper.get_scraped_sources")
+    @patch("scraper.scraper.parse_arguments")
+    def test_main_custom_sources_not_filtered(self, mock_parse: MagicMock, mock_get_scraped: MagicMock, mock_validate: MagicMock, mock_create: MagicMock, mock_scrape: MagicMock):
+        """Custom --sources should not be filtered even if already scraped."""
+        mock_args = MagicMock()
+        mock_args.sources = ["https://api.chucknorris.io/jokes/random"]
+        mock_args.output = "test.db"
+        mock_args.verbose = False
+        mock_args.dry_run = False
+        mock_args.threads = 4
+        mock_args.refresh = False
+        mock_parse.return_value = mock_args
+
+        mock_get_scraped.return_value = {"https://api.chucknorris.io/jokes/random"}
+
+        mock_validate.return_value = ["https://api.chucknorris.io/jokes/random"]
+        mock_scrape.return_value = 1
+
+        result = main()
+        assert result == 0
+
+        mock_validate.assert_called_once()
+        call_args = mock_validate.call_args[0][0]
+        assert "https://api.chucknorris.io/jokes/random" in call_args

@@ -91,6 +91,19 @@ def dev_setup(_: None = None) -> int:
     This will run `python -m pip install -e .[dev]` and then configure the git
     hooks path and install pre-commit hooks.
     """
+    # Ensure Node.js is installed and meets the minimum required version
+    try:
+        check_node_min_version = "24.11.1"
+        node_ok = _check_node_version(check_node_min_version)
+        if not node_ok:
+            print(f"Node.js >= {check_node_min_version} is required to run Pyright pre-commit hooks.")
+            print("Install Node.js or update to a recent version: https://nodejs.org/")
+            return 1
+    except Exception:
+        # If anything goes wrong checking Node, warn and continue; this preserves existing dev-setup
+        # behavior for environments that do not need Node, but we prefer to fail loudly so devs
+        # are aware of missing tooling required for pre-commit pyright checks.
+        print("Warning: Unable to verify Node.js installation. Pyright pre-commit hooks may fail.")
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", ".[dev]"])
     except subprocess.CalledProcessError as cpe:
@@ -108,6 +121,37 @@ def dev_setup(_: None = None) -> int:
         # Return non-zero if pre-commit failed
         return cpe.returncode
     return 0
+
+
+def _check_node_version(min_version: str) -> bool:
+    """Check that the installed Node.js version is >= specified min_version.
+
+    Returns True if Node is installed and the version is >= min_version, otherwise False.
+    """
+    try:
+        completed = subprocess.run(["node", "--version"], capture_output=True, text=True)
+        if completed.returncode != 0:
+            return False
+        version = completed.stdout.strip()
+        # Node reports version as `v24.11.1`
+        if version.startswith("v"):
+            version = version[1:]
+        # Parse numeric components
+        v_parts = [int(p) for p in version.split(".") if p.isdigit() or p.lstrip("-").isdigit()]
+        min_parts = [int(p) for p in min_version.split(".")]
+        # Zero pad
+        while len(v_parts) < len(min_parts):
+            v_parts.append(0)
+        for a, b in zip(v_parts, min_parts):
+            if a > b:
+                return True
+            if a < b:
+                return False
+        return True
+    except FileNotFoundError:
+        return False
+    except Exception:
+        return False
 
 
 def main(argv: Sequence[str] | None = None) -> int:

@@ -184,5 +184,10 @@
     "python.terminal.activateEnvironment": true, // Re-enable auto-activation for venv
     "python.terminal.activateEnvInCurrentTerminal": true,
     "python.defaultInterpreterPath": "python3",
-    "python.terminal.launchArgs": []
+    "python.terminal.launchArgs": [],
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }

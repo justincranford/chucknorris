@@ -37,7 +37,7 @@ def load_sources() -> List[str]:
     Returns:
         List of source URLs (excluding commented lines).
     """
-    sources = []
+    sources: List[str] = []
     try:
         with open(SOURCES_FILE, "r", encoding="utf-8") as f:
             for line in f:
@@ -346,10 +346,15 @@ def extract_quotes_from_json(content: str, source: str) -> List[Dict[str, str]]:
             elif "joke" in data:
                 quotes.append({"quote": data["joke"], "source": source})
             elif "result" in data and isinstance(data["result"], list):
-                # Search results
+                # Search results - handle list of dicts or strings
                 for item in data["result"]:  # type: ignore
-                    if "value" in item:
-                        quotes.append({"quote": item["value"], "source": source})  # type: ignore
+                    if isinstance(item, dict):
+                        if "value" in item:
+                            quotes.append({"quote": item["value"], "source": source})  # type: ignore
+                        elif "joke" in item:
+                            quotes.append({"quote": item["joke"], "source": source})  # type: ignore
+                    elif isinstance(item, str):
+                        quotes.append({"quote": item, "source": source})  # type: ignore
         elif isinstance(data, list):
             # List of quotes
             for item in data:  # type: ignore
@@ -782,6 +787,52 @@ def validate_sources(sources: List[str]) -> List[str]:
     return valid_sources
 
 
+def get_scraped_sources(csv_path: str = DEFAULT_OUTPUT_CSV, db_path: str = DEFAULT_OUTPUT_DB) -> set[str]:
+    """Return a set of unique source URLs that have already been scraped and
+    saved in the CSV file and/or SQLite database.
+
+    Args:
+        csv_path: Path to the CSV file where quotes were saved.
+        db_path: Path to the SQLite database file where quotes were saved.
+
+    Returns:
+        A set of source URLs (strings).
+    """
+    scraped: set[str] = set()
+
+    # Read CSV file if it exists
+    try:
+        import csv as _csv
+
+        if Path(csv_path).exists():
+            with open(csv_path, newline="", encoding="utf-8") as csvfile:
+                reader = _csv.DictReader(csvfile)
+                for row in reader:
+                    src = row.get("source")
+                    if src:
+                        scraped.add(src)
+    except Exception:
+        logging.debug("Failed to read CSV for scraped sources; continuing")
+
+    # Read SQLite DB if it exists
+    try:
+        if Path(db_path).exists():
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            try:
+                cursor.execute("SELECT DISTINCT source FROM quotes")
+                for (src,) in cursor.fetchall():
+                    if src:
+                        scraped.add(src)
+            finally:
+                cursor.close()
+                conn.close()
+    except Exception:
+        logging.debug("Failed to read DB for scraped sources; continuing")
+
+    return scraped
+
+
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments.
 
@@ -859,6 +910,14 @@ Examples:
         help="Number of concurrent threads for parallel processing (default: 4)",
     )
 
+    parser.add_argument(
+        "-r",
+        "-refresh",
+        "--refresh",
+        action="store_true",
+        help="Refresh mode: don't skip sources already present in quotes.csv/quotes.db",
+    )
+
     return parser.parse_args()
 
 
@@ -875,6 +934,16 @@ def main() -> int:
 
     # Use default sources if none provided
     sources = args.sources if args.sources else load_sources()
+
+    # Optionally filter out sources already scraped when using sources.txt
+    if not args.refresh and not args.sources:
+        scraped_sources = get_scraped_sources()
+        if scraped_sources:
+            filtered = [s for s in sources if s not in scraped_sources]
+            skipped = len(sources) - len(filtered)
+            if skipped > 0:
+                logging.info(f"Skipping {skipped} already-scraped sources (use --refresh to override)")
+            sources = filtered
     sources = validate_sources(sources)
 
     if not sources:

@@ -164,6 +164,17 @@ repos:
         additional_dependencies: [types-requests]
         args: ['--ignore-missing-imports']
 
+  # Pyright (PyLance/Type Checks) - run via Node.js npx
+  - repo: local
+    hooks:
+      - id: pyright
+        name: Run Pyright static type checks (Pylance compatibility)
+        entry: npx --yes pyright
+        language: system
+        files: '\.py$'
+        require_serial: false
+        stages: [pre-commit]
+
   # Python security linting
   - repo: https://github.com/PyCQA/bandit
     rev: 1.8.0

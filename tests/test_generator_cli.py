@@ -10,13 +10,13 @@ class TestSetupLogging:
     """Tests for setup_logging function."""
 
     @patch("quotes.generator.logging.basicConfig")
-    def test_setup_logging_not_verbose(self, mock_config):
+    def test_setup_logging_not_verbose(self, mock_config: MagicMock):
         """Test logging setup when not verbose."""
         setup_logging(verbose=False)
         mock_config.assert_called_once()
 
     @patch("quotes.generator.logging.basicConfig")
-    def test_setup_logging_verbose(self, mock_config):
+    def test_setup_logging_verbose(self, mock_config: MagicMock):
         """Test logging setup when verbose."""
         setup_logging(verbose=True)
         mock_config.assert_called_once()
@@ -27,7 +27,7 @@ class TestParseArguments:
 
     def test_parse_arguments_defaults(self):
         """Test default argument values."""
-        with patch("sys.argv", ["generator.py"]):
+        with patch.object(sys, "argv", ["generator.py"]):
             args = parse_arguments()
             assert args.count == 1
             assert args.seed is None
@@ -38,26 +38,26 @@ class TestParseArguments:
 
     def test_parse_arguments_with_count(self):
         """Test parsing with custom count."""
-        with patch("sys.argv", ["generator.py", "--count", "100"]):
+        with patch.object(sys, "argv", ["generator.py", "--count", "100"]):
             args = parse_arguments()
             assert args.count == 100
 
     def test_parse_arguments_with_seed(self):
         """Test parsing with seed."""
-        with patch("sys.argv", ["generator.py", "--seed", "42"]):
+        with patch.object(sys, "argv", ["generator.py", "--seed", "42"]):
             args = parse_arguments()
             assert args.seed == 42
 
     def test_parse_arguments_with_output(self):
         """Test parsing with output file."""
-        with patch("sys.argv", ["generator.py", "--output", "quotes.json"]):
+        with patch.object(sys, "argv", ["generator.py", "--output", "quotes.json"]):
             args = parse_arguments()
             assert args.output == "quotes.json"
 
     def test_parse_arguments_with_format(self):
         """Test parsing with different formats."""
         for fmt in ["text", "json", "csv"]:
-            with patch("sys.argv", ["generator.py", "--format", fmt]):
+            with patch.object(sys, "argv", ["generator.py", "--format", fmt]):
                 args = parse_arguments()
                 assert args.format == fmt
 
@@ -115,7 +115,7 @@ class TestMain:
     @patch("quotes.generator.generate_quotes")
     @patch("quotes.generator.validate_database")
     @patch("quotes.generator.parse_arguments")
-    def test_main_success(self, mock_parse, mock_validate_db, mock_generate, mock_export):
+    def test_main_success(self, mock_parse: MagicMock, mock_validate_db: MagicMock, mock_generate: MagicMock, mock_export: MagicMock):
         """Test successful main execution."""
         mock_args = MagicMock()
         mock_args.count = 10
@@ -133,7 +133,7 @@ class TestMain:
         assert result == 0
 
     @patch("quotes.generator.parse_arguments")
-    def test_main_invalid_arguments(self, mock_parse):
+    def test_main_invalid_arguments(self, mock_parse: MagicMock):
         """Test main with invalid arguments."""
         mock_args = MagicMock()
         mock_args.count = 0  # Invalid
@@ -145,7 +145,7 @@ class TestMain:
 
     @patch("quotes.generator.validate_database")
     @patch("quotes.generator.parse_arguments")
-    def test_main_invalid_database(self, mock_parse, mock_validate_db):
+    def test_main_invalid_database(self, mock_parse: MagicMock, mock_validate_db: MagicMock):
         """Test main with invalid database."""
         mock_args = MagicMock()
         mock_args.count = 10
@@ -161,7 +161,7 @@ class TestMain:
     @patch("quotes.generator.generate_quotes")
     @patch("quotes.generator.validate_database")
     @patch("quotes.generator.parse_arguments")
-    def test_main_no_quotes_generated(self, mock_parse, mock_validate_db, mock_generate):
+    def test_main_no_quotes_generated(self, mock_parse: MagicMock, mock_validate_db: MagicMock, mock_generate: MagicMock):
         """Test main when no quotes are generated."""
         mock_args = MagicMock()
         mock_args.count = 10
@@ -180,7 +180,7 @@ class TestMain:
     @patch("quotes.generator.generate_quotes")
     @patch("quotes.generator.validate_database")
     @patch("quotes.generator.parse_arguments")
-    def test_main_with_all_options(self, mock_parse, mock_validate_db, mock_generate, mock_export):
+    def test_main_with_all_options(self, mock_parse: MagicMock, mock_validate_db: MagicMock, mock_generate: MagicMock, mock_export: MagicMock):
         """Test main with all options specified."""
         mock_args = MagicMock()
         mock_args.count = 100

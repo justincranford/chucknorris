@@ -3,6 +3,8 @@
 import json
 import logging
 import sqlite3
+from pathlib import Path
+from typing import Any, Dict, List
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -19,6 +21,7 @@ from scraper.scraper import (
     extract_quotes_from_parade,
     extract_quotes_from_thefactsite,
     fetch_url,
+    get_scraped_sources,
     load_sources,
     save_quotes_to_csv,
     save_quotes_to_db,
@@ -30,10 +33,10 @@ from scraper.scraper import (
 
 
 @pytest.fixture
-def temp_db(tmp_path):
+def temp_db(tmp_path: Path):
     """Create a temporary database for testing."""
     db_path = tmp_path / "test_quotes.db"
-    create_database(str(db_path))
+    create_database(str(db_path))  # Ensure db_path is passed as a string
     return str(db_path)
 
 
@@ -50,7 +53,7 @@ class TestSetupLogging:
     """Tests for logging setup."""
 
     @patch("scraper.scraper.logging.basicConfig")
-    def test_setup_logging_default(self, mock_config):
+    def test_setup_logging_default(self, mock_config: MagicMock):
         """Test default logging setup."""
         setup_logging(verbose=False)
         mock_config.assert_called_once()
@@ -59,7 +62,7 @@ class TestSetupLogging:
         assert call_args[1]["level"] == logging.INFO
 
     @patch("scraper.scraper.logging.basicConfig")
-    def test_setup_logging_verbose(self, mock_config):
+    def test_setup_logging_verbose(self, mock_config: MagicMock):
         """Test verbose logging setup."""
         setup_logging(verbose=True)
         mock_config.assert_called_once()
@@ -71,27 +74,27 @@ class TestSetupLogging:
 class TestCreateDatabase:
     """Tests for database creation."""
 
-    def test_create_database_creates_file(self, tmp_path):
+    def test_create_database_creates_file(self, tmp_path: Path):
         """Test that database file is created."""
-        db_path = tmp_path / "quotes.db"
+        db_path: Path = tmp_path / "quotes.db"
         create_database(str(db_path))
-        assert db_path.exists()
+        assert isinstance(db_path, Path) and db_path.exists()
 
-    def test_create_database_creates_table(self, temp_db):
+    def test_create_database_creates_table(self, temp_db: str) -> None:
         """Test that quotes table is created with correct schema."""
         with sqlite3.connect(temp_db) as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='quotes'")
             assert cursor.fetchone() is not None
 
-    def test_create_database_creates_index(self, temp_db):
+    def test_create_database_creates_index(self, temp_db: str) -> None:
         """Test that index on quote column is created."""
         with sqlite3.connect(temp_db) as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_quote'")
             assert cursor.fetchone() is not None
 
-    def test_create_database_idempotent(self, temp_db):
+    def test_create_database_idempotent(self, temp_db: str) -> None:
         """Test that creating database multiple times doesn't error."""
         # Should not raise an exception
         create_database(temp_db)
@@ -125,7 +128,7 @@ class TestCommentOutSource:
         os.remove("test_sources.txt")
 
     @patch("scraper.scraper.SOURCES_FILE", "nonexistent.txt")
-    def test_comment_out_source_file_not_found(self, caplog):
+    def test_comment_out_source_file_not_found(self, caplog: pytest.LogCaptureFixture):
         """Test commenting out source when file doesn't exist."""
         with caplog.at_level(logging.ERROR):
             comment_out_source("https://example.com", "test")
@@ -154,10 +157,10 @@ class TestLoadSources:
         os.remove("test_sources.txt")
 
     @patch("scraper.scraper.SOURCES_FILE", "nonexistent.txt")
-    def test_load_sources_file_not_found(self, caplog):
+    def test_load_sources_file_not_found(self, caplog: pytest.LogCaptureFixture):
         """Test loading sources when file doesn't exist."""
-        with caplog.at_level(logging.WARNING):
-            result = load_sources()
+        caplog.set_level(logging.WARNING)
+        result = load_sources()
         assert result == []
         assert any("Sources file nonexistent.txt not found" in record.message for record in caplog.records)
 
@@ -165,7 +168,7 @@ class TestLoadSources:
 class TestSaveQuotes:
     """Tests for saving quotes."""
 
-    def test_save_quotes_to_db_success(self, temp_db, sample_quotes):
+    def test_save_quotes_to_db_success(self, temp_db: str, sample_quotes: List[Dict[str, str]]):
         """Test saving quotes to database successfully."""
         result = save_quotes_to_db(sample_quotes, temp_db)
         assert result == 2
@@ -176,14 +179,14 @@ class TestSaveQuotes:
             cursor.execute("SELECT COUNT(*) FROM quotes")
             assert cursor.fetchone()[0] == 2
 
-    def test_save_quotes_to_db_empty_list(self, temp_db, caplog):
+    def test_save_quotes_to_db_empty_list(self, temp_db: str, caplog: pytest.LogCaptureFixture):
         """Test saving empty list of quotes."""
-        with caplog.at_level(logging.WARNING):
-            result = save_quotes_to_db([], temp_db)
+        caplog.set_level(logging.WARNING)
+        result = save_quotes_to_db([], temp_db)
         assert result == 0
         assert any("No quotes to save" in record.message for record in caplog.records)
 
-    def test_save_quotes_to_db_duplicate(self, temp_db, sample_quotes):
+    def test_save_quotes_to_db_duplicate(self, temp_db: str, sample_quotes: List[Dict[str, str]]):
         """Test saving duplicate quotes."""
         # Save first time
         result1 = save_quotes_to_db(sample_quotes, temp_db)
@@ -193,7 +196,7 @@ class TestSaveQuotes:
         result2 = save_quotes_to_db(sample_quotes, temp_db)
         assert result2 == 0
 
-    def test_save_quotes_to_csv_success(self, tmp_path, sample_quotes):
+    def test_save_quotes_to_csv_success(self, tmp_path: Path, sample_quotes: List[Dict[str, str]]):
         """Test saving quotes to CSV successfully."""
         csv_path = tmp_path / "test_quotes.csv"
         result = save_quotes_to_csv(sample_quotes, str(csv_path))
@@ -207,7 +210,7 @@ class TestSaveQuotes:
             assert "quote" in content
             assert "Chuck Norris can divide by zero." in content
 
-    def test_save_quotes_to_csv_empty_list(self, tmp_path, caplog):
+    def test_save_quotes_to_csv_empty_list(self, tmp_path: Path, caplog: pytest.LogCaptureFixture):
         """Test saving empty list to CSV."""
         csv_path = tmp_path / "empty.csv"
         with caplog.at_level(logging.WARNING):
@@ -215,7 +218,7 @@ class TestSaveQuotes:
         assert result == 0
         assert any("No quotes to save" in record.message for record in caplog.records)
 
-    def test_save_quotes_to_csv_append(self, tmp_path, sample_quotes):
+    def test_save_quotes_to_csv_append(self, tmp_path: Path, sample_quotes: List[Dict[str, str]]):
         """Test appending to existing CSV."""
         csv_path = tmp_path / "append.csv"
 
@@ -237,7 +240,7 @@ class TestFetchUrl:
     """Tests for URL fetching."""
 
     @patch("scraper.scraper.requests.get")
-    def test_fetch_url_success(self, mock_get):
+    def test_fetch_url_success(self, mock_get: MagicMock):
         """Test successful URL fetch."""
         mock_response = Mock()
         mock_response.text = "test content"
@@ -249,7 +252,7 @@ class TestFetchUrl:
         mock_get.assert_called_once()
 
     @patch("scraper.scraper.requests.get")
-    def test_fetch_url_timeout(self, mock_get):
+    def test_fetch_url_timeout(self, mock_get: MagicMock):
         """Test URL fetch with timeout."""
         mock_get.side_effect = requests.exceptions.Timeout()
         result = fetch_url("https://example.com", retries=1)
@@ -257,7 +260,7 @@ class TestFetchUrl:
 
     @patch("scraper.scraper.comment_out_source")
     @patch("scraper.scraper.requests.get")
-    def test_fetch_url_http_error(self, mock_get, mock_comment, caplog):
+    def test_fetch_url_http_error(self, mock_get: MagicMock, mock_comment: MagicMock, caplog: pytest.LogCaptureFixture):
         """Test URL fetch with HTTP error."""
         with caplog.at_level(logging.WARNING):
             mock_response = Mock()
@@ -273,7 +276,7 @@ class TestFetchUrl:
 
     @patch("scraper.scraper.requests.get")
     @patch("scraper.scraper.time.sleep")
-    def test_fetch_url_retry_logic(self, mock_sleep, mock_get, caplog):
+    def test_fetch_url_retry_logic(self, mock_sleep: MagicMock, mock_get: MagicMock, caplog: pytest.LogCaptureFixture):
         """Test retry logic on failure."""
         with caplog.at_level(logging.WARNING):
             mock_get.side_effect = requests.exceptions.RequestException()
@@ -282,6 +285,24 @@ class TestFetchUrl:
         assert mock_get.call_count == 3
         assert mock_sleep.call_count == 2  # One less than retries
         assert any("Error fetching" in record.message for record in caplog.records)
+        assert any("Failed to fetch" in record.message for record in caplog.records)
+
+    @patch("scraper.scraper.requests.get")
+    @patch("scraper.scraper.time.sleep")
+    def test_fetch_url_http_error_causes_sleep(self, mock_sleep: MagicMock, mock_get: MagicMock, caplog: pytest.LogCaptureFixture):
+        """Test that HTTPError (non-404) triggers retries with sleep between attempts."""
+        mock_response = Mock()
+        mock_response.status_code = 500
+        http_error = requests.exceptions.HTTPError("500 Server Error")
+        http_error.response = mock_response
+        mock_get.side_effect = http_error
+
+        with caplog.at_level(logging.WARNING):
+            result = fetch_url("http://example.com/500", retries=2)
+
+        assert result is None
+        assert mock_get.call_count == 2
+        assert mock_sleep.call_count == 1  # One sleep between two attempts
         assert any("Failed to fetch" in record.message for record in caplog.records)
 
 
@@ -304,13 +325,13 @@ class TestExtractQuotesFromJson:
             ([], 0),
         ],
     )
-    def test_extract_quotes_from_json_various_formats(self, json_data, expected_count):
+    def test_extract_quotes_from_json_various_formats(self, json_data: Any, expected_count: int):
         """Test extraction from various JSON formats."""
         json_string = json.dumps(json_data)
         quotes = extract_quotes_from_json(json_string, "test_source")
         assert len(quotes) == expected_count
 
-    def test_extract_quotes_from_json_invalid_json(self, caplog):
+    def test_extract_quotes_from_json_invalid_json(self, caplog: pytest.LogCaptureFixture):
         """Test extraction with invalid JSON."""
         with caplog.at_level(logging.ERROR):
             quotes = extract_quotes_from_json("invalid json", "test_source")
@@ -348,6 +369,15 @@ class TestExtractQuotesFromJson:
         # Should extract no quotes since dicts don't have known keys
         assert len(quotes) == 0
 
+    def test_extract_quotes_from_json_list_mixed(self):
+        """Test extraction from a mixed list containing value/joke/dict/str entries."""
+        data = {"result": [{"value": "V1"}, {"joke": "J1"}, {"other": "x"}]}
+        content = json.dumps(data)
+        quotes = extract_quotes_from_json(content, "test_source")
+        # Should extract items with value or joke only
+        assert any(q["quote"] == "V1" for q in quotes)
+        assert any(q["quote"] == "J1" for q in quotes)
+
 
 class TestExtractQuotesFromHtml:
     """Tests for HTML quote extraction."""
@@ -381,10 +411,18 @@ class TestExtractQuotesFromHtml:
     def test_extract_quotes_from_html_exception(self):
         """Test extraction when parsing raises exception."""
         # Invalid HTML that might cause issues
-        html = None
+        html = ""
         quotes = extract_quotes_from_html(html, "test_source")
         assert isinstance(quotes, list)
         assert len(quotes) == 0
+
+    def test_extract_quotes_from_html_parsing_exception_logs_error(self, caplog: pytest.LogCaptureFixture):
+        """Force a parsing exception in BeautifulSoup and assert an empty list is returned and error logged."""
+        with patch("scraper.scraper.BeautifulSoup", side_effect=Exception("boom")):
+            with caplog.at_level(logging.ERROR):
+                quotes = extract_quotes_from_html("<p>test</p>", "test_source")
+                assert quotes == []
+                assert any("Failed to parse HTML" in record.message for record in caplog.records)
 
 
 class TestExtractQuotes:
@@ -418,7 +456,7 @@ class TestExtractQuotes:
 class TestSaveQuotesToDb:
     """Tests for saving quotes to database."""
 
-    def test_save_quotes_to_db_success(self, temp_db, sample_quotes):
+    def test_save_quotes_to_db_success(self, temp_db: str, sample_quotes: List[Dict[str, str]]):
         """Test successful quote saving."""
         saved_count = save_quotes_to_db(sample_quotes, temp_db)
         assert saved_count == 2
@@ -430,7 +468,7 @@ class TestSaveQuotesToDb:
             count = cursor.fetchone()[0]
         assert count == 2
 
-    def test_save_quotes_to_db_duplicates(self, temp_db, sample_quotes):
+    def test_save_quotes_to_db_duplicates(self, temp_db: str, sample_quotes: List[Dict[str, str]]):
         """Test handling of duplicate quotes."""
         # Save quotes twice
         save_quotes_to_db(sample_quotes, temp_db)
@@ -446,12 +484,12 @@ class TestSaveQuotesToDb:
             count = cursor.fetchone()[0]
         assert count == 2
 
-    def test_save_quotes_to_db_empty_list(self, temp_db):
+    def test_save_quotes_to_db_empty_list(self, temp_db: str):
         """Test saving empty quote list."""
         saved_count = save_quotes_to_db([], temp_db)
         assert saved_count == 0
 
-    def test_save_quotes_to_db_partial_duplicates(self, temp_db):
+    def test_save_quotes_to_db_partial_duplicates(self, temp_db: str):
         """Test saving with some duplicates."""
         quotes1 = [{"quote": "Quote 1", "source": "src"}]
         quotes2 = [
@@ -477,7 +515,7 @@ class TestValidateSources:
             ([], 0),
         ],
     )
-    def test_validate_sources(self, sources, expected_count):
+    def test_validate_sources(self, sources: List[str], expected_count: int):
         """Test source URL validation."""
         valid = validate_sources(sources)
         assert len(valid) == expected_count
@@ -490,13 +528,41 @@ class TestValidateSources:
         assert "https://valid.com" in valid
 
 
+class TestGetScrapedSources:
+    """Tests for retrieving already-scraped sources from CSV and DB."""
+
+    def test_get_scraped_sources_from_csv_and_db(self, tmp_path: Path):
+        # Create a CSV file with a couple of sources
+        csv_path = tmp_path / "sourced.csv"
+        with open(csv_path, "w", encoding="utf-8", newline="") as f:
+            f.write("source,quote\n")
+            f.write("https://csv-source.com,First quote\n")
+
+        # Create DB with another source
+        db_path = tmp_path / "quotes.db"
+        create_database(str(db_path))
+        with sqlite3.connect(str(db_path)) as conn:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO quotes (quote, source) VALUES (?, ?)", ("DB quote", "https://db-source.com"))
+            conn.commit()
+
+        scraped = get_scraped_sources(str(csv_path), str(db_path))
+        assert "https://csv-source.com" in scraped
+        assert "https://db-source.com" in scraped
+
+    def test_get_scraped_sources_not_found_files(self):
+        scraped = get_scraped_sources("notfound.csv", "notfound.db")
+        assert isinstance(scraped, set)
+        assert len(scraped) == 0
+
+
 class TestScrapeSource:
     """Tests for scraping a single source."""
 
     @patch("scraper.scraper.fetch_url")
     @patch("scraper.scraper.extract_quotes")
     @patch("scraper.scraper.save_quotes_to_db")
-    def test_scrape_source_success(self, mock_save, mock_extract, mock_fetch, temp_db):
+    def test_scrape_source_success(self, mock_save: MagicMock, mock_extract: MagicMock, mock_fetch: MagicMock, temp_db: str):
         """Test successful source scraping."""
         mock_fetch.return_value = "content"
         mock_extract.return_value = [{"quote": "Test", "source": "src"}]
@@ -506,7 +572,7 @@ class TestScrapeSource:
         assert result == 1
 
     @patch("scraper.scraper.fetch_url")
-    def test_scrape_source_fetch_failure(self, mock_fetch, temp_db):
+    def test_scrape_source_fetch_failure(self, mock_fetch: MagicMock, temp_db: str):
         """Test scraping when fetch fails."""
         mock_fetch.return_value = None
         result = scrape_source("https://example.com", temp_db, None, ["sqlite"])
@@ -514,7 +580,7 @@ class TestScrapeSource:
 
     @patch("scraper.scraper.fetch_url")
     @patch("scraper.scraper.extract_quotes")
-    def test_scrape_source_no_quotes_found(self, mock_extract, mock_fetch, temp_db):
+    def test_scrape_source_no_quotes_found(self, mock_extract: MagicMock, mock_fetch: MagicMock, temp_db: str):
         """Test scraping when no quotes are found."""
         mock_fetch.return_value = "content"
         mock_extract.return_value = []
@@ -524,7 +590,7 @@ class TestScrapeSource:
     @patch("scraper.scraper.fetch_url")
     @patch("scraper.scraper.extract_quotes")
     @patch("scraper.scraper.save_quotes_to_db")
-    def test_scrape_source_unknown_format(self, mock_save, mock_extract, mock_fetch, temp_db, caplog):
+    def test_scrape_source_unknown_format(self, mock_save: MagicMock, mock_extract: MagicMock, mock_fetch: MagicMock, temp_db: str, caplog: pytest.LogCaptureFixture):
         """Test scraping with unknown format logs warning."""
         mock_fetch.return_value = "content"
         mock_extract.return_value = [{"quote": "Test", "source": "src"}]
@@ -541,7 +607,7 @@ class TestScrapeAllSources:
     """Tests for scraping multiple sources."""
 
     @patch("scraper.scraper.scrape_source")
-    def test_scrape_all_sources_success(self, mock_scrape, temp_db):
+    def test_scrape_all_sources_success(self, mock_scrape: MagicMock, temp_db: str):
         """Test scraping multiple sources successfully."""
         mock_scrape.return_value = 5
         sources = ["https://example1.com", "https://example2.com"]
@@ -550,7 +616,7 @@ class TestScrapeAllSources:
         assert mock_scrape.call_count == 2
 
     @patch("scraper.scraper.scrape_source")
-    def test_scrape_all_sources_with_failures(self, mock_scrape, temp_db):
+    def test_scrape_all_sources_with_failures(self, mock_scrape: MagicMock, temp_db: str):
         """Test scraping with some sources failing."""
         mock_scrape.side_effect = [5, Exception("Error"), 3]
         sources = ["https://1.com", "https://2.com", "https://3.com"]
@@ -558,14 +624,14 @@ class TestScrapeAllSources:
         assert total == 8  # 5 + 0 (error) + 3
 
     @patch("scraper.scraper.scrape_source")
-    def test_scrape_all_sources_empty_list(self, mock_scrape, temp_db):
+    def test_scrape_all_sources_empty_list(self, mock_scrape: MagicMock, temp_db: str):
         """Test scraping with empty source list."""
         total = scrape_all_sources([], temp_db, None, ["sqlite"])
         assert total == 0
         mock_scrape.assert_not_called()
 
     @patch("scraper.scraper.scrape_source")
-    def test_scrape_all_sources_single_thread(self, mock_scrape, temp_db):
+    def test_scrape_all_sources_single_thread(self, mock_scrape: MagicMock, temp_db: str):
         """Test scraping with single thread (max_workers=1)."""
         mock_scrape.return_value = 3
         sources = ["https://example1.com", "https://example2.com"]
@@ -576,7 +642,7 @@ class TestScrapeAllSources:
     @patch("concurrent.futures.ThreadPoolExecutor")
     @patch("concurrent.futures.as_completed")
     @patch("scraper.scraper.scrape_source")
-    def test_scrape_all_sources_multi_thread(self, mock_scrape, mock_as_completed, mock_executor, temp_db):
+    def test_scrape_all_sources_multi_thread(self, mock_scrape: MagicMock, mock_as_completed: MagicMock, mock_executor: MagicMock, temp_db: str):
         """Test scraping with multiple threads."""
         mock_scrape.return_value = 4
         sources = ["https://example1.com", "https://example2.com", "https://example3.com"]
@@ -605,7 +671,7 @@ class TestScrapeAllSources:
     @patch("concurrent.futures.ThreadPoolExecutor")
     @patch("concurrent.futures.as_completed")
     @patch("scraper.scraper.scrape_source")
-    def test_scrape_all_sources_multi_thread_exception(self, mock_scrape, mock_as_completed, mock_executor, temp_db, caplog):
+    def test_scrape_all_sources_multi_thread_exception(self, mock_scrape: MagicMock, mock_as_completed: MagicMock, mock_executor: MagicMock, temp_db: str, caplog: pytest.LogCaptureFixture):
         """Test multi-threaded scraping with exception handling."""
         sources = ["https://example1.com", "https://example2.com"]
 
@@ -637,7 +703,7 @@ class TestExtractQuotesFromParade:
     def test_extract_quotes_from_parade_error(self):
         """Test error handling in Parade.com extraction."""
         # Malformed HTML that will cause parsing error
-        content = None  # This will cause an exception
+        content = ""  # This will cause an exception
         quotes = extract_quotes_from_parade(content, "test_source")
         assert quotes == []
 
@@ -655,6 +721,20 @@ class TestExtractQuotesFromParade:
         assert all("Chuck Norris" in quote["quote"] for quote in quotes)
         assert all(quote["source"] == source for quote in quotes)
 
+    def test_extract_quotes_from_parade_various_selectors(self):
+        """Test extractors for different selectors (li, class=joke, class=fact)."""
+        html = """
+        <div class="article-body">
+            <li>Chuck Norris can do anything. Li selector.</li>
+            <p class="joke">Chuck Norris is a joke.</p>
+            <div class="fact">Chuck Norris fact here.</div>
+        </div>
+        """
+        source = "https://parade.com/970343/parade/chuck-norris-jokes/"
+        quotes = extract_quotes_from_parade(html, source)
+        # Should find all three unique quotes
+        assert len(quotes) >= 3
+
     def test_extract_quotes_from_parade_no_quotes(self):
         """Test extraction with no valid quotes."""
         html = "<p>This is just regular text.</p>"
@@ -662,13 +742,39 @@ class TestExtractQuotesFromParade:
         quotes = extract_quotes_from_parade(html, source)
         assert quotes == []
 
+    def test_extract_quotes_from_parade_selectors_joke_and_fact(self):
+        """Test that class selectors with 'joke' or 'fact' are recognized."""
+        html = """
+        <div class="article-body">
+            <p class="joke">Chuck Norris can do anything. joke selector here.</p>
+            <div class="fact">Chuck Norris fact content that should be captured.</div>
+        </div>
+        """
+        source = "https://parade.com/970343/parade/chuck-norris-jokes/"
+        quotes = extract_quotes_from_parade(html, source)
+        assert any("joke selector" in q["quote"] for q in quotes)
+        assert any("fact content" in q["quote"] for q in quotes)
+
+    def test_extract_quotes_from_parade_duplicates_removed(self):
+        """Ensure duplicate quotes are removed by extract_quotes_from_parade."""
+        html = """
+        <div class="article-body">
+            <p>Chuck Norris can do anything. Even HTML parsing.</p>
+            <p>Chuck Norris can do anything. Even HTML parsing.</p>
+        </div>
+        """
+        source = "https://parade.com/970343/parade/chuck-norris-jokes/"
+        quotes = extract_quotes_from_parade(html, source)
+        # Should deduplicate identical quotes
+        assert len(quotes) == 1
+
 
 class TestExtractQuotesFromThefactsite:
     """Tests for Thefactsite.com quote extraction."""
 
     def test_extract_quotes_from_thefactsite_error(self):
         """Test error handling in Thefactsite.com extraction."""
-        content = None  # This will cause an exception
+        content = ""  # This will cause an exception
         quotes = extract_quotes_from_thefactsite(content, "test_source")
         assert quotes == []
 
@@ -686,13 +792,33 @@ class TestExtractQuotesFromThefactsite:
         assert all("Chuck Norris" in quote["quote"] for quote in quotes)
         assert not any(quote["quote"].startswith(("1. ", "2. ")) for quote in quotes)
 
+    def test_extract_quotes_from_thefactsite_no_matches(self):
+        """Test that non-matching LI entries are filtered out."""
+        html = "<ul><li>Just some text</li><li>Another plain text</li></ul>"
+        source = "https://www.thefactsite.com/top-100-chuck-norris-facts/"
+        quotes = extract_quotes_from_thefactsite(html, source)
+        assert quotes == []
+
+    def test_extract_quotes_from_thefactsite_mixed_entries(self):
+        """Ensure only valid LI items containing Chuck Norris are captured and numbering is stripped."""
+        html = """
+        <ol>
+            <li>1. Chuck Norris is unstoppable.</li>
+            <li>2. Plain text not matching.</li>
+        </ol>
+        """
+        source = "https://www.thefactsite.com/top-100-chuck-norris-facts/"
+        quotes = extract_quotes_from_thefactsite(html, source)
+        assert any("Chuck Norris" in q["quote"] for q in quotes)
+        assert all(not q["quote"].startswith("1.") for q in quotes)
+
 
 class TestExtractQuotesFromChucknorrisfactsFr:
     """Tests for Chucknorrisfacts.fr quote extraction."""
 
     def test_extract_quotes_from_chucknorrisfacts_fr_error(self):
         """Test error handling in Chucknorrisfacts.fr extraction."""
-        content = None  # This will cause an exception
+        content = ""  # This will cause an exception
         quotes = extract_quotes_from_chucknorrisfacts_fr(content, "test_source")
         assert quotes == []
 
@@ -708,13 +834,32 @@ class TestExtractQuotesFromChucknorrisfactsFr:
         assert len(quotes) >= 2
         assert all("Chuck Norris" in quote["quote"] for quote in quotes)
 
+    def test_extract_quotes_from_chucknorrisfacts_fr_numbering(self):
+        """Ensure numbering is stripped and French quotes are recognized."""
+        html = "<p>1. Chuck Norris est incroyable et fait des choses extraordinaires.</p>"
+        source = "https://www.chucknorrisfacts.fr/en/top-100-chuck-norris-facts"
+        quotes = extract_quotes_from_chucknorrisfacts_fr(html, source)
+        assert len(quotes) == 1
+        assert "Chuck Norris" in quotes[0]["quote"] or "chuck norris" in quotes[0]["quote"].lower()
+
+    def test_extract_quotes_from_chucknorrisfacts_fr_selectors(self):
+        """Ensure multiple selectors (div.fact, p, li) work and numbering removed."""
+        html = """
+        <div class="fact">1. Chuck Norris en Français.</div>
+        <p>Chuck Norris en français sans numéro.</p>
+        <li>2. Chuck Norris encore.</li>
+        """
+        source = "https://www.chucknorrisfacts.fr/en/top-100-chuck-norris-facts"
+        quotes = extract_quotes_from_chucknorrisfacts_fr(html, source)
+        assert len(quotes) >= 2
+
 
 class TestExtractQuotesFromFactinate:
     """Tests for Factinate.com quote extraction."""
 
     def test_extract_quotes_from_factinate_error(self):
         """Test error handling in Factinate.com extraction."""
-        content = None  # This will cause an exception
+        content = ""  # This will cause an exception
         quotes = extract_quotes_from_factinate(content, "test_source")
         assert quotes == []
 
@@ -729,6 +874,16 @@ class TestExtractQuotesFromFactinate:
         # Should extract from both blockquote and div.quote
         assert len(quotes) >= 2
         assert all("Chuck Norris" in quote["quote"] for quote in quotes)
+
+    def test_extract_quotes_from_factinate_blockquote(self):
+        """Ensure blockquote selectors are covered for Factinate extraction."""
+        html = """
+        <blockquote>Chuck Norris can bench press the internet.</blockquote>
+        <div class="quote">Another Factinate quote about Chuck.</div>
+        """
+        source = "https://www.factinate.com/quote/chuck-norris-jokes/"
+        quotes = extract_quotes_from_factinate(html, source)
+        assert any("bench press" in q["quote"] for q in quotes)
 
 
 class TestExtractQuotesRouting:
@@ -760,7 +915,7 @@ class TestExtractQuotesRouting:
 class TestDatabaseMigration:
     """Test database migration functionality."""
 
-    def test_create_database_migrates_old_schema(self, tmp_path):
+    def test_create_database_migrates_old_schema(self, tmp_path: Path):
         """Test that create_database migrates from old schema with created_at column."""
         db_path = tmp_path / "test_migrate.db"
 
@@ -806,7 +961,7 @@ class TestFetchUrlEdgeCases:
 
     @patch("scraper.scraper.requests.get")
     @patch("scraper.scraper.comment_out_source")
-    def test_fetch_url_http_404_error(self, mock_comment_out, mock_get):
+    def test_fetch_url_http_404_error(self, mock_comment_out: MagicMock, mock_get: MagicMock):
         """Test fetch_url handles HTTP 404 errors by commenting out source."""
         # Create a realistic HTTPError
         http_error = requests.exceptions.HTTPError("404 Client Error: Not Found")
@@ -823,7 +978,7 @@ class TestFetchUrlEdgeCases:
 
     @patch("scraper.scraper.requests.get")
     @patch("scraper.scraper.time.sleep")
-    def test_fetch_url_request_exception_final_return_none(self, mock_sleep, mock_get):
+    def test_fetch_url_request_exception_final_return_none(self, mock_sleep: MagicMock, mock_get: MagicMock):
         """Test fetch_url returns None after exhausting retries on RequestException."""
         mock_get.side_effect = requests.exceptions.RequestException("Network error")
 
@@ -837,7 +992,7 @@ class TestFetchUrlEdgeCases:
 
     @patch("scraper.scraper.requests.get")
     @patch("scraper.scraper.comment_out_source")
-    def test_fetch_url_http_error_non_404_logs_warning(self, mock_comment_out, mock_get, caplog):
+    def test_fetch_url_http_error_non_404_logs_warning(self, mock_comment_out: MagicMock, mock_get: MagicMock, caplog: pytest.LogCaptureFixture):
         """Test fetch_url logs warning for HTTP errors that are not 404."""
         # Create HTTPError that's not 404
         http_error = requests.exceptions.HTTPError("500 Server Error")
@@ -856,7 +1011,7 @@ class TestFetchUrlEdgeCases:
 
     @patch("scraper.scraper.requests.get")
     @patch("scraper.scraper.time.sleep")
-    def test_fetch_url_request_exception_logs_warning(self, mock_sleep, mock_get, caplog):
+    def test_fetch_url_request_exception_logs_warning(self, mock_sleep: MagicMock, mock_get: MagicMock, caplog: pytest.LogCaptureFixture):
         """Test fetch_url logs warning for RequestException."""
         mock_get.side_effect = requests.exceptions.RequestException("Connection timeout")
 

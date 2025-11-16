@@ -5,7 +5,9 @@ import json
 import logging
 import sqlite3
 from io import StringIO
-from unittest.mock import patch
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -13,7 +15,7 @@ from quotes.generator import export_quotes, export_quotes_csv, export_quotes_jso
 
 
 @pytest.fixture
-def temp_db_with_quotes(tmp_path):
+def temp_db_with_quotes(tmp_path: Path) -> str:
     """Create a temporary database with sample quotes."""
     db_path = tmp_path / "test_quotes.db"
 
@@ -44,7 +46,7 @@ def temp_db_with_quotes(tmp_path):
 
 
 @pytest.fixture
-def sample_quote_dicts():
+def sample_quote_dicts() -> List[Dict[str, Any]]:
     """Sample quote dictionaries for testing."""
     return [
         {
@@ -65,11 +67,11 @@ def sample_quote_dicts():
 class TestValidateDatabase:
     """Tests for database validation."""
 
-    def test_validate_database_exists_with_quotes(self, temp_db_with_quotes):
+    def test_validate_database_exists_with_quotes(self, temp_db_with_quotes: str):
         """Test validation of existing database with quotes."""
         assert validate_database(temp_db_with_quotes) is True
 
-    def test_validate_database_not_exists(self, tmp_path, caplog):
+    def test_validate_database_not_exists(self, tmp_path: Path, caplog: pytest.LogCaptureFixture):
         """Test validation of non-existent database."""
         db_path = tmp_path / "nonexistent.db"
         with caplog.at_level(logging.ERROR):
@@ -77,7 +79,7 @@ class TestValidateDatabase:
         assert result is False
         assert any("Database file not found" in record.message for record in caplog.records)
 
-    def test_validate_database_empty(self, tmp_path):
+    def test_validate_database_empty(self, tmp_path: Path):
         """Test validation of empty database."""
         db_path = tmp_path / "empty.db"
         with sqlite3.connect(str(db_path)) as conn:
@@ -96,7 +98,7 @@ class TestValidateDatabase:
 
         assert validate_database(str(db_path)) is False
 
-    def test_validate_database_corrupted(self, tmp_path):
+    def test_validate_database_corrupted(self, tmp_path: Path):
         """Test validation of corrupted database."""
         db_path = tmp_path / "corrupted.db"
         # Create a file that's not a valid SQLite database
@@ -109,14 +111,14 @@ class TestValidateDatabase:
 class TestGetAllQuoteIds:
     """Tests for retrieving all quote IDs."""
 
-    def test_get_all_quote_ids_success(self, temp_db_with_quotes):
+    def test_get_all_quote_ids_success(self, temp_db_with_quotes: str):
         """Test retrieving all quote IDs."""
         ids = get_all_quote_ids(temp_db_with_quotes)
         assert len(ids) == 3
         assert all(isinstance(id, int) for id in ids)
         assert ids == [1, 2, 3]
 
-    def test_get_all_quote_ids_empty_database(self, tmp_path):
+    def test_get_all_quote_ids_empty_database(self, tmp_path: Path):
         """Test retrieving IDs from empty database."""
         db_path = tmp_path / "empty.db"
         with sqlite3.connect(str(db_path)) as conn:
@@ -140,7 +142,7 @@ class TestGetAllQuoteIds:
 class TestGetQuoteById:
     """Tests for retrieving a quote by ID."""
 
-    def test_get_quote_by_id_success(self, temp_db_with_quotes):
+    def test_get_quote_by_id_success(self, temp_db_with_quotes: str):
         """Test retrieving an existing quote."""
         quote = get_quote_by_id(temp_db_with_quotes, 1)
         assert quote is not None
@@ -148,14 +150,15 @@ class TestGetQuoteById:
         assert "Chuck Norris can divide by zero" in quote["quote"]
         assert quote["source"] == "source1"
 
-    def test_get_quote_by_id_not_found(self, temp_db_with_quotes):
+    def test_get_quote_by_id_not_found(self, temp_db_with_quotes: str):
         """Test retrieving a non-existent quote."""
         quote = get_quote_by_id(temp_db_with_quotes, 999)
         assert quote is None
 
-    def test_get_quote_by_id_structure(self, temp_db_with_quotes):
+    def test_get_quote_by_id_structure(self, temp_db_with_quotes: str):
         """Test that returned quote has correct structure."""
         quote = get_quote_by_id(temp_db_with_quotes, 1)
+        assert quote is not None
         assert "id" in quote
         assert "quote" in quote
         assert "source" in quote
@@ -164,18 +167,18 @@ class TestGetQuoteById:
 class TestGenerateQuotes:
     """Tests for generating random quotes."""
 
-    def test_generate_quotes_single(self, temp_db_with_quotes):
+    def test_generate_quotes_single(self, temp_db_with_quotes: str):
         """Test generating a single quote."""
         quotes = generate_quotes(temp_db_with_quotes, count=1)
         assert len(quotes) == 1
         assert "quote" in quotes[0]
 
-    def test_generate_quotes_multiple(self, temp_db_with_quotes):
+    def test_generate_quotes_multiple(self, temp_db_with_quotes: str):
         """Test generating multiple quotes."""
         quotes = generate_quotes(temp_db_with_quotes, count=3)
         assert len(quotes) == 3
 
-    def test_generate_quotes_with_seed_reproducible(self, temp_db_with_quotes):
+    def test_generate_quotes_with_seed_reproducible(self, temp_db_with_quotes: str):
         """Test that same seed produces same results."""
         quotes1 = generate_quotes(temp_db_with_quotes, count=5, seed=42)
         quotes2 = generate_quotes(temp_db_with_quotes, count=5, seed=42)
@@ -185,7 +188,7 @@ class TestGenerateQuotes:
         for q1, q2 in zip(quotes1, quotes2):
             assert q1["id"] == q2["id"]
 
-    def test_generate_quotes_different_seeds(self, temp_db_with_quotes):
+    def test_generate_quotes_different_seeds(self, temp_db_with_quotes: str):
         """Test that different seeds likely produce different results."""
         quotes1 = generate_quotes(temp_db_with_quotes, count=3, seed=42)
         quotes2 = generate_quotes(temp_db_with_quotes, count=3, seed=99)
@@ -198,13 +201,13 @@ class TestGenerateQuotes:
         assert len(ids1) == 3
         assert len(ids2) == 3
 
-    def test_generate_quotes_more_than_available(self, temp_db_with_quotes):
+    def test_generate_quotes_more_than_available(self, temp_db_with_quotes: str):
         """Test generating more quotes than available (with replacement)."""
         quotes = generate_quotes(temp_db_with_quotes, count=10)
         # Should generate 10 quotes even though only 3 unique ones exist
         assert len(quotes) == 10
 
-    def test_generate_quotes_empty_database(self, tmp_path):
+    def test_generate_quotes_empty_database(self, tmp_path: Path):
         """Test generating from empty database."""
         db_path = tmp_path / "empty.db"
         with sqlite3.connect(str(db_path)) as conn:
@@ -225,11 +228,11 @@ class TestGenerateQuotes:
         assert quotes == []
 
     @patch("quotes.generator.get_quote_by_id")
-    def test_generate_quotes_with_missing_quote(self, mock_get_quote, temp_db_with_quotes):
+    def test_generate_quotes_with_missing_quote(self, mock_get_quote: MagicMock, temp_db_with_quotes: str):
         """Test generating quotes when some quotes are missing from DB."""
 
         # Mock get_quote_by_id to return None for id 2
-        def mock_get(db_path, id):
+        def mock_get(db_path: str, id: int) -> Optional[Dict[str, Any]]:
             if id == 2:
                 return None
             return {
@@ -246,7 +249,7 @@ class TestGenerateQuotes:
         assert len(quotes) == 2  # Only 2 out of 3
 
     @pytest.mark.parametrize("count", [1, 5, 10, 100])
-    def test_generate_quotes_various_counts(self, temp_db_with_quotes, count):
+    def test_generate_quotes_various_counts(self, temp_db_with_quotes: str, count: int):
         """Test generating various counts of quotes."""
         quotes = generate_quotes(temp_db_with_quotes, count=count)
         assert len(quotes) == count
@@ -255,7 +258,7 @@ class TestGenerateQuotes:
 class TestExportQuotesText:
     """Tests for exporting quotes in text format."""
 
-    def test_export_quotes_text_to_string(self, sample_quote_dicts):
+    def test_export_quotes_text_to_string(self, sample_quote_dicts: List[Dict[str, Any]]):
         """Test exporting quotes to string buffer."""
         output = StringIO()
         export_quotes_text(sample_quote_dicts, output)
@@ -264,7 +267,7 @@ class TestExportQuotesText:
         assert "Chuck Norris can divide by zero." in result
         assert "Chuck Norris counted to infinity. Twice." in result
 
-    def test_export_quotes_text_line_count(self, sample_quote_dicts):
+    def test_export_quotes_text_line_count(self, sample_quote_dicts: List[Dict[str, Any]]):
         """Test that each quote gets its own line."""
         output = StringIO()
         export_quotes_text(sample_quote_dicts, output)
@@ -283,23 +286,23 @@ class TestExportQuotesText:
 class TestExportQuotesJson:
     """Tests for exporting quotes in JSON format."""
 
-    def test_export_quotes_json_valid(self, sample_quote_dicts):
+    def test_export_quotes_json_valid(self, sample_quote_dicts: List[Dict[str, Any]]):
         """Test that exported JSON is valid."""
         output = StringIO()
         export_quotes_json(sample_quote_dicts, output)
         result = output.getvalue()
 
         # Should be valid JSON
-        data = json.loads(result)
+        data: List[Dict[str, Any]] = json.loads(result)
         assert isinstance(data, list)
         assert len(data) == 2
 
-    def test_export_quotes_json_structure(self, sample_quote_dicts):
+    def test_export_quotes_json_structure(self, sample_quote_dicts: List[Dict[str, Any]]):
         """Test that JSON has correct structure."""
         output = StringIO()
         export_quotes_json(sample_quote_dicts, output)
         result = output.getvalue()
-        data = json.loads(result)
+        data: List[Dict[str, Any]] = json.loads(result)
 
         assert "id" in data[0]
         assert "quote" in data[0]
@@ -311,14 +314,14 @@ class TestExportQuotesJson:
         output = StringIO()
         export_quotes_json([], output)
         result = output.getvalue()
-        data = json.loads(result)
+        data: List[Dict[str, Any]] = json.loads(result)
         assert data == []
 
 
 class TestExportQuotesCsv:
     """Tests for exporting quotes in CSV format."""
 
-    def test_export_quotes_csv_valid(self, sample_quote_dicts):
+    def test_export_quotes_csv_valid(self, sample_quote_dicts: List[Dict[str, Any]]):
         """Test that exported CSV is valid."""
         output = StringIO()
         export_quotes_csv(sample_quote_dicts, output)
@@ -329,7 +332,7 @@ class TestExportQuotesCsv:
         rows = list(reader)
         assert len(rows) == 2
 
-    def test_export_quotes_csv_headers(self, sample_quote_dicts):
+    def test_export_quotes_csv_headers(self, sample_quote_dicts: List[Dict[str, Any]]):
         """Test that CSV has correct headers."""
         output = StringIO()
         export_quotes_csv(sample_quote_dicts, output)
@@ -339,7 +342,7 @@ class TestExportQuotesCsv:
         headers = reader.fieldnames
         assert headers == ["id", "quote", "source", "created_at"]
 
-    def test_export_quotes_csv_content(self, sample_quote_dicts):
+    def test_export_quotes_csv_content(self, sample_quote_dicts: List[Dict[str, Any]]):
         """Test CSV content correctness."""
         output = StringIO()
         export_quotes_csv(sample_quote_dicts, output)
@@ -368,24 +371,24 @@ class TestExportQuotes:
     """Tests for the main export function."""
 
     @patch("quotes.generator.export_quotes_text")
-    def test_export_quotes_text_format(self, mock_export, sample_quote_dicts):
+    def test_export_quotes_text_format(self, mock_export: MagicMock, sample_quote_dicts: List[Dict[str, Any]]):
         """Test exporting in text format."""
         export_quotes(sample_quote_dicts, "text", None)
         mock_export.assert_called_once()
 
     @patch("quotes.generator.export_quotes_json")
-    def test_export_quotes_json_format(self, mock_export, sample_quote_dicts):
+    def test_export_quotes_json_format(self, mock_export: MagicMock, sample_quote_dicts: List[Dict[str, Any]]):
         """Test exporting in JSON format."""
         export_quotes(sample_quote_dicts, "json", None)
         mock_export.assert_called_once()
 
     @patch("quotes.generator.export_quotes_csv")
-    def test_export_quotes_csv_format(self, mock_export, sample_quote_dicts):
+    def test_export_quotes_csv_format(self, mock_export: MagicMock, sample_quote_dicts: List[Dict[str, Any]]):
         """Test exporting in CSV format."""
         export_quotes(sample_quote_dicts, "csv", None)
         mock_export.assert_called_once()
 
-    def test_export_quotes_to_file(self, sample_quote_dicts, tmp_path):
+    def test_export_quotes_to_file(self, sample_quote_dicts: List[Dict[str, Any]], tmp_path: Path):
         """Test exporting to a file."""
         output_file = tmp_path / "output.txt"
         export_quotes(sample_quote_dicts, "text", str(output_file))
@@ -394,13 +397,13 @@ class TestExportQuotes:
         content = output_file.read_text()
         assert "Chuck Norris can divide by zero." in content
 
-    def test_export_quotes_empty_list_no_error(self, caplog):
+    def test_export_quotes_empty_list_no_error(self, caplog: pytest.LogCaptureFixture):
         """Test that exporting empty list doesn't error."""
         with caplog.at_level(logging.WARNING):
             export_quotes([], "text", None)
         assert any("No quotes to export" in record.message for record in caplog.records)
 
-    def test_export_quotes_empty_list_to_file(self, tmp_path, caplog):
+    def test_export_quotes_empty_list_to_file(self, tmp_path: Path, caplog: pytest.LogCaptureFixture):
         """Test exporting empty list to file."""
         output_file = tmp_path / "empty.txt"
         with caplog.at_level(logging.WARNING):
@@ -410,14 +413,14 @@ class TestExportQuotes:
         assert any("No quotes to export" in record.message for record in caplog.records)
 
     @pytest.mark.parametrize("format_type", ["text", "json", "csv"])
-    def test_export_quotes_all_formats(self, sample_quote_dicts, tmp_path, format_type):
+    def test_export_quotes_all_formats(self, sample_quote_dicts: List[Dict[str, Any]], tmp_path: Path, format_type: str):
         """Test exporting in all supported formats."""
         output_file = tmp_path / f"output.{format_type}"
         export_quotes(sample_quote_dicts, format_type, str(output_file))
         assert output_file.exists()
         assert output_file.stat().st_size > 0
 
-    def test_export_quotes_unknown_format(self, sample_quote_dicts, tmp_path, caplog):
+    def test_export_quotes_unknown_format(self, sample_quote_dicts: List[Dict[str, Any]], tmp_path: Path, caplog: pytest.LogCaptureFixture):
         """Test exporting with unknown format logs error."""
         output_file = tmp_path / "output.txt"
         with caplog.at_level(logging.ERROR):

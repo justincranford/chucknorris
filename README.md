@@ -64,6 +64,21 @@ Notes:
 
 - `pip install` cannot safely run arbitrary repo scripts automatically for security reasons, so an explicit `dev-setup` invocation is required.
 
+Note: `dev-setup` now enforces Node.js (>= 24.11.1) as a required tool for developer environments, since the repo runs Pyright via `npx` in pre-commit hooks; the script will check for a compatible Node version and exit if missing.
+
+### Static analysis (Pylance / Pyright)
+
+This repository uses Pylance in the editor for fast, incremental static analysis and Pyright for CLI/CI checks. We've added a pre-commit hook that runs Pyright to ensure type errors and Pylance-relevant diagnostics block commits and pushes.
+
+To run Pyright locally (requires Node.js):
+
+```bash
+npx --yes pyright
+# or using pnpm: pnpm dlx pyright
+```
+
+If you don't have Node.js, you can still use Pylance in VS Code for editor-based checks.
+
 ## Quick Start
 
 ### 1. Scrape Chuck Norris Quotes

@@ -1,6 +1,10 @@
 import io
 
+import pytest
+
 from quotes import generator
+
+pytest.importorskip("pytest_benchmark")
 
 
 def test_generate_quotes_benchmark(benchmark):
