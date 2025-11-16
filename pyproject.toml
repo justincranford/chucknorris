@@ -92,6 +92,7 @@ exclude_lines = [
 
 [tool.node]
 dependencies = [
-    "node>=22.0.0",
+    "nvm-windows>=1.2.2",
+    "node>=24.11.1",
     "cspell>=9.0.0",
 ]
