@@ -18,6 +18,7 @@ runs:
           ~/.cache/pip
           ~/.cache/pip/wheels
           %LOCALAPPDATA%\\pip\\Cache
+          %LOCALAPPDATA%\\pip\\Cache\\wheels
         key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
           ${{ runner.os }}-pip-
