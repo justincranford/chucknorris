@@ -35,6 +35,7 @@ dev = [
     "isort>=5.13.2",
     "mypy>=1.13.0",
     "pre-commit>=4.0.1",
+    "bandit>=1.8.0",
     "types-requests>=2.32.0",
 ]
 
