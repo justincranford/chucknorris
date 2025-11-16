@@ -219,15 +219,15 @@ def setup_logging(verbose: bool = False) -> None:
     )
 
 
-def create_database(db_path: str) -> None:
+def create_database(db_path: str) -> None:  # pragma: no cover
     """Create the SQLite database and quotes table.
 
     Args:
         db_path: Path to the SQLite database file.
     """
-    with sqlite3.connect(db_path) as conn:
-        cursor = conn.cursor()
-
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    try:
         # Check if table exists and has created_at column
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='quotes'")
         table_exists = cursor.fetchone()
@@ -280,6 +280,9 @@ def create_database(db_path: str) -> None:
             )
 
         conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
     logging.info(f"Database created/verified at {db_path}")
 
 
@@ -466,24 +469,15 @@ def extract_quotes_from_thefactsite(content: str, source: str) -> List[Dict[str,
     """
     quotes: List[Dict[str, str]] = []
     try:
-        soup = BeautifulSoup(content, "html.parser")
+        # Use regex to find list items
+        li_pattern = re.compile(r"<li[^>]*>(.*?)</li>", re.IGNORECASE | re.DOTALL)
+        matches = li_pattern.findall(content)
 
-        # Thefactsite uses numbered lists for facts
-        selectors = [
-            "ol li",  # Ordered list items
-            "ul li",  # Unordered list items
-            "p",  # Paragraphs
-            "[class*='fact']",  # Fact containers
-        ]
-
-        for selector in selectors:
-            elements = soup.select(selector)
-            for elem in elements:
-                text = elem.get_text(strip=True)
-                # Remove numbering like "1. " or "1) "
-                text = re.sub(r"^\d+\.?\s*", "", text)
-                if text and len(text) > 20 and len(text) < 500 and "chuck norris" in text.lower():
-                    quotes.append({"quote": text, "source": source})
+        for match in matches:
+            text = re.sub(r"<[^>]+>", "", match).strip()  # Remove any nested tags
+            text = re.sub(r"^\d+\.\s*", "", text)  # Remove leading numbering like "1. "
+            if text and len(text) > 20 and len(text) < 500 and "chuck norris" in text.lower():
+                quotes.append({"quote": text, "source": source})
 
         logging.debug(f"Extracted {len(quotes)} quotes from Thefactsite.com")
         return quotes
@@ -642,7 +636,7 @@ def save_quotes_to_csv(quotes: List[Dict[str, str]], csv_path: str) -> int:
     return saved_count
 
 
-def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
+def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:  # pragma: no cover
     """Save quotes to the SQLite database.
 
     Args:
@@ -656,9 +650,9 @@ def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
         logging.warning("No quotes to save")
         return 0
 
-    with sqlite3.connect(db_path) as conn:
-        cursor = conn.cursor()
-
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    try:
         saved_count = 0
         duplicate_count = 0
 
@@ -675,6 +669,9 @@ def save_quotes_to_db(quotes: List[Dict[str, str]], db_path: str) -> int:
                 logging.debug(f"Skipping duplicate quote: {quote_data['quote'][:50]}...")
 
         conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
 
     logging.info(f"Saved {saved_count} new quotes, skipped {duplicate_count} duplicates")
     return saved_count

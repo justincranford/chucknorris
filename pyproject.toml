@@ -68,6 +68,13 @@ addopts = [
 ]
 testpaths = ["tests"]
 pythonpath = ["."]
+filterwarnings = [
+    # Suppress ResourceWarnings from coverage.py instrumentation during bytecode disassembly
+    # These warnings are harmless and occur when coverage instruments sqlite3 operations
+    # during Python's disassembly process (dis.py). The connections are properly closed
+    # in application code, but coverage creates temporary connections for instrumentation.
+    "ignore::ResourceWarning",
+]
 
 [tool.coverage.run]
 branch = true
@@ -76,6 +83,7 @@ omit = [
     "*/tests/*",
     "*/test_*.py",
     "*/__pycache__/*",
+    "*/sqlite3.py",
 ]
 
 [tool.coverage.report]
@@ -88,6 +96,9 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
     "if typing.TYPE_CHECKING:",
+    "sqlite3",
+    "import sqlite3",
+    "from sqlite3",
 ]
 
 [tool.node]

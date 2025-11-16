@@ -79,19 +79,17 @@ class TestCreateDatabase:
 
     def test_create_database_creates_table(self, temp_db):
         """Test that quotes table is created with correct schema."""
-        conn = sqlite3.connect(temp_db)
-        cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='quotes'")
-        assert cursor.fetchone() is not None
-        conn.close()
+        with sqlite3.connect(temp_db) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='quotes'")
+            assert cursor.fetchone() is not None
 
     def test_create_database_creates_index(self, temp_db):
         """Test that index on quote column is created."""
-        conn = sqlite3.connect(temp_db)
-        cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_quote'")
-        assert cursor.fetchone() is not None
-        conn.close()
+        with sqlite3.connect(temp_db) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_quote'")
+            assert cursor.fetchone() is not None
 
     def test_create_database_idempotent(self, temp_db):
         """Test that creating database multiple times doesn't error."""
@@ -173,11 +171,10 @@ class TestSaveQuotes:
         assert result == 2
 
         # Verify quotes were saved
-        conn = sqlite3.connect(temp_db)
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM quotes")
-        assert cursor.fetchone()[0] == 2
-        conn.close()
+        with sqlite3.connect(temp_db) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM quotes")
+            assert cursor.fetchone()[0] == 2
 
     def test_save_quotes_to_db_empty_list(self, temp_db, caplog):
         """Test saving empty list of quotes."""
@@ -427,11 +424,10 @@ class TestSaveQuotesToDb:
         assert saved_count == 2
 
         # Verify quotes are in database
-        conn = sqlite3.connect(temp_db)
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM quotes")
-        count = cursor.fetchone()[0]
-        conn.close()
+        with sqlite3.connect(temp_db) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM quotes")
+            count = cursor.fetchone()[0]
         assert count == 2
 
     def test_save_quotes_to_db_duplicates(self, temp_db, sample_quotes):
@@ -444,11 +440,10 @@ class TestSaveQuotesToDb:
         assert saved_count == 0
 
         # Database should still have only 2 quotes
-        conn = sqlite3.connect(temp_db)
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM quotes")
-        count = cursor.fetchone()[0]
-        conn.close()
+        with sqlite3.connect(temp_db) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM quotes")
+            count = cursor.fetchone()[0]
         assert count == 2
 
     def test_save_quotes_to_db_empty_list(self, temp_db):
@@ -790,21 +785,20 @@ class TestDatabaseMigration:
         create_database(str(db_path))
 
         # Verify migration worked
-        conn = sqlite3.connect(str(db_path))
-        cursor = conn.cursor()
-        cursor.execute("PRAGMA table_info(quotes)")
-        columns = [col[1] for col in cursor.fetchall()]
-        assert "created_at" not in columns
-        assert "id" in columns
-        assert "quote" in columns
-        assert "source" in columns
+        with sqlite3.connect(str(db_path)) as conn:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(quotes)")
+            columns = [col[1] for col in cursor.fetchall()]
+            assert "created_at" not in columns
+            assert "id" in columns
+            assert "quote" in columns
+            assert "source" in columns
 
-        # Verify data was preserved
-        cursor.execute("SELECT quote, source FROM quotes")
-        rows = cursor.fetchall()
-        assert len(rows) == 1
-        assert rows[0] == ("Old quote", "old_source")
-        conn.close()
+            # Verify data was preserved
+            cursor.execute("SELECT quote, source FROM quotes")
+            rows = cursor.fetchall()
+            assert len(rows) == 1
+            assert rows[0] == ("Old quote", "old_source")
 
 
 class TestFetchUrlEdgeCases:
