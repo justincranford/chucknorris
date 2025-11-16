@@ -10,9 +10,37 @@ runs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.14'
+    - id: cache-pip
+      name: Cache pip packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pip
+          ~/.cache/pip/wheels
+          %LOCALAPPDATA%\\pip\\Cache
+        key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - id: cache-pre-commit
+      name: Cache pre-commit hooks
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pre-commit
+          %LOCALAPPDATA%\\pre-commit
+        key: ${{ runner.os }}-pre-commit-${{ hashFiles('pyproject.toml', '.pre-commit-config.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pre-commit-
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e .[dev]
+      shell: bash
+
+    - name: Show cache status
+      run: |
+        echo "pip cache hit: ${{ steps.cache-pip.outputs.cache-hit }}"
+        echo "pre-commit cache hit: ${{ steps.cache-pre-commit.outputs.cache-hit }}"
       shell: bash
