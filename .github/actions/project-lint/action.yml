@@ -8,22 +8,3 @@ runs:
       run: |
         pre-commit run --all-files --show-diff-on-failure -j 4
       shell: bash
-    - name: Lint with flake8
-      run: |
-        flake8 scraper quotes --max-line-length=200 --extend-ignore=E203,W503,E501
-      shell: bash
-
-    - name: Check formatting with black
-      run: |
-        black --check scraper quotes tests
-      shell: bash
-
-    - name: Check import sorting with isort
-      run: |
-        isort --check-only --profile black scraper quotes tests
-      shell: bash
-
-    - name: Type check with mypy
-      run: |
-        mypy scraper quotes --ignore-missing-imports
-      shell: bash
