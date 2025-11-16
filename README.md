@@ -19,29 +19,33 @@ A Python-based project to scrape Chuck Norris quotes from various online databas
 ## Installation
 
 1. Clone the repository:
-```bash
-git clone <repository-url>
-cd chucknorris
-```
 
-2. Create a virtual environment (recommended):
-```bash
-python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
-```
+   ```bash
+   git clone <repository-url>
+   cd chucknorris
+   ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+1. Create a virtual environment (recommended):
 
-4. Install pre-commit hooks:
-```bash
-pre-commit install
-```
+   ```bash
+   python -m venv venv
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+
+1. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+1. Install pre-commit hooks:
+
+   ```bash
+   pre-commit install
+   ```
 
 ## Usage
 
@@ -53,14 +57,16 @@ Scrape Chuck Norris quotes from online sources and store them in a database:
 python download/scraper.py
 ```
 
-#### Options:
+#### Options
+
 - `-s, --sources`: List of URLs or sources to scrape (space-separated)
 - `-o, --output`: Output database file path (default: `download/quotes.db`)
 - `-f, --format`: Output format (default: `sqlite`)
 - `-v, --verbose`: Enable verbose logging
 - `-h, --help`: Display help and usage examples
 
-#### Examples:
+#### Examples
+
 ```bash
 # Scrape from default sources
 python download/scraper.py
@@ -83,7 +89,8 @@ Generate random Chuck Norris quotes from the scraped database:
 python quotes/generator.py
 ```
 
-#### Options:
+#### Generator Options
+
 - `-c, --count`: Number of quotes to generate (default: 1, max: 10,000,000)
 - `-s, --seed`: Random seed for reproducible output (default: None for truly random)
 - `-o, --output`: Output file path (default: stdout)
@@ -92,7 +99,8 @@ python quotes/generator.py
 - `-v, --verbose`: Enable verbose logging
 - `-h, --help`: Display help and usage examples
 
-#### Examples:
+#### Generator Examples
+
 ```bash
 # Generate a single random quote
 python quotes/generator.py
@@ -128,6 +136,7 @@ pytest --cov=download --cov=quotes --cov-report=html
 ```
 
 View coverage report:
+
 ```bash
 # The HTML report will be in htmlcov/index.html
 ```
@@ -145,13 +154,14 @@ This project uses several tools to maintain code quality:
 - **pre-commit**: Git hooks for automated checks
 
 Run all checks manually:
+
 ```bash
 pre-commit run --all-files
 ```
 
 ### Project Structure
 
-```
+```text
 chucknorris/
 ├── .github/
 │   ├── workflows/          # CI/CD pipelines
@@ -178,6 +188,7 @@ chucknorris/
 The scraper module provides functionality to extract, transform, and load Chuck Norris quotes from various online sources.
 
 **Key Functions:**
+
 - `scrape_quotes(sources, output_db)`: Main ETL pipeline
 - `fetch_from_api(url)`: Fetch quotes from JSON APIs
 - `parse_html(content)`: Parse quotes from HTML pages
@@ -188,6 +199,7 @@ The scraper module provides functionality to extract, transform, and load Chuck 
 The generator module provides functionality to generate random Chuck Norris quotes from the database.
 
 **Key Functions:**
+
 - `generate_quotes(count, seed, database)`: Generate random quotes
 - `export_quotes(quotes, format, output)`: Export quotes in various formats
 
