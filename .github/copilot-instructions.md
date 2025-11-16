@@ -19,9 +19,11 @@
 | '01-02.copilot-extension-tools.instructions.md' | ** | Tool usage guidelines |
 | '01-03.scripts.instructions.md' | ** | Execution guidelines for scripts |
 | '01-04.dependencies.instructions.md' | ** | Preferred dependencies and versions |
-| '02-01.project-context.instructions.md' | ** | Project context and overview |
-| '02-02.coding.instructions.md' | ** | Coding standards and style guidelines |
-| '02-03.testing.instructions.md' | ** | Testing requirements and methodologies |
-| '02-04.data-integrity.instructions.md' | ** | Data integrity requirements and deduplication |
+| '02-01.git.instructions.md' | ** | Guidelines for making changes and commits |
+| '02-02.github.instructions.md' | ** | GitHub workflow and best practices |
+| '03-01.project.instructions.md' | ** | Project context and overview |
+| '03-02.coding.instructions.md' | ** | Coding standards and style guidelines |
+| '03-03.testing.instructions.md' | ** | Testing requirements and methodologies |
+| '03-04.data-integrity.instructions.md' | ** | Data integrity requirements and deduplication |
 | '03-01.git.instructions.md' | ** | Guidelines for making changes and commits |
 | '03-02.github.instructions.md' | ** | GitHub workflow and best practices |
