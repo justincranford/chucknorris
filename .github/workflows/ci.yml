@@ -28,3 +28,11 @@ jobs:
     steps:
     - uses: ./.github/actions/project-setup
     - uses: ./.github/actions/project-test
+
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: ./.github/actions/project-setup
+    - uses: ./.github/actions/project-benchmark

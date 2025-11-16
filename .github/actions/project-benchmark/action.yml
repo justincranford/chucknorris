@@ -1,0 +1,19 @@
+name: 'Project Benchmark'
+description: 'Run benchmark tests and upload results'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run benchmarks with pytest
+      run: |
+        # Run only benchmark tests (convention: tests/benchmark)
+        pytest tests/benchmark --benchmark-json=benchmark.json
+      shell: bash
+
+    - name: Upload benchmark artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: |
+          benchmark.json
+        retention-days: 7
