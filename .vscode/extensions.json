@@ -24,5 +24,5 @@
     "mechatroner.rainbow-csv", // mechatroner: Highlight CSV and TSV files, Run SQL-like queries
   ],
 
-  "unwantedRecommendations": ["gitkraken.gitkraken"] // GitKraken Git GUI client
+  "unwantedRecommendations": ["gitkraken.gitkraken"] // GitKraken: GitLens GUI client
 }
