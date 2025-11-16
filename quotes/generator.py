@@ -108,27 +108,11 @@ def get_quote_by_id(db_path: str, quote_id: int) -> Optional[Dict[str, Any]]:  #
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     try:
-        # Try to query created_at if the column exists; fall back if not
-        try:
-            cursor.execute(
-                "SELECT id, quote, source, created_at FROM quotes WHERE id = ?",
-                (quote_id,),
-            )
-            row = cursor.fetchone()
-            if row:
-                return {
-                    "id": row[0],
-                    "quote": row[1],
-                    "source": row[2],
-                    "created_at": row[3],
-                }
-        except sqlite3.OperationalError:
-            # Column created_at does not exist; fallback
-            cursor.execute(
-                "SELECT id, quote, source FROM quotes WHERE id = ?",
-                (quote_id,),
-            )
-            row = cursor.fetchone()
+        cursor.execute(
+            "SELECT id, quote, source FROM quotes WHERE id = ?",
+            (quote_id,),
+        )
+        row = cursor.fetchone()
     finally:
         cursor.close()
         conn.close()
@@ -225,7 +209,6 @@ def export_quotes_json(quotes: List[Dict[str, Any]], output: Optional[TextIO] = 
             "id": quote["id"],
             "quote": quote["quote"],
             "source": quote["source"],
-            "created_at": quote.get("created_at"),
         }
         for quote in quotes
     ]
@@ -246,7 +229,7 @@ def export_quotes_csv(quotes: List[Dict[str, Any]], output: Optional[TextIO] = N
     """
     file_handle = output if output else sys.stdout
 
-    fieldnames = ["id", "quote", "source", "created_at"]
+    fieldnames = ["id", "quote", "source"]
     writer = csv.DictWriter(file_handle, fieldnames=fieldnames)
 
     writer.writeheader()
@@ -256,7 +239,6 @@ def export_quotes_csv(quotes: List[Dict[str, Any]], output: Optional[TextIO] = N
                 "id": quote["id"],
                 "quote": quote["quote"],
                 "source": quote["source"],
-                "created_at": quote.get("created_at"),
             }
         )
 

@@ -27,8 +27,7 @@ def temp_db_with_quotes(tmp_path: Path) -> str:
             CREATE TABLE quotes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 quote TEXT NOT NULL UNIQUE,
-                source TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                source TEXT
             )
         """
         )
@@ -53,13 +52,11 @@ def sample_quote_dicts() -> List[Dict[str, Any]]:
             "id": 1,
             "quote": "Chuck Norris can divide by zero.",
             "source": "source1",
-            "created_at": "2024-01-01 00:00:00",
         },
         {
             "id": 2,
             "quote": "Chuck Norris counted to infinity. Twice.",
             "source": "source2",
-            "created_at": "2024-01-01 00:00:00",
         },
     ]
 
@@ -89,8 +86,7 @@ class TestValidateDatabase:
                 CREATE TABLE quotes (
                     id INTEGER PRIMARY KEY,
                     quote TEXT NOT NULL,
-                    source TEXT,
-                    created_at TIMESTAMP
+                    source TEXT
                 )
             """
             )
@@ -128,8 +124,7 @@ class TestGetAllQuoteIds:
                 CREATE TABLE quotes (
                     id INTEGER PRIMARY KEY,
                     quote TEXT,
-                    source TEXT,
-                    created_at TIMESTAMP
+                    source TEXT
                 )
             """
             )
@@ -217,8 +212,7 @@ class TestGenerateQuotes:
                 CREATE TABLE quotes (
                     id INTEGER PRIMARY KEY,
                     quote TEXT,
-                    source TEXT,
-                    created_at TIMESTAMP
+                    source TEXT
                 )
             """
             )
@@ -239,7 +233,7 @@ class TestGenerateQuotes:
                 "id": id,
                 "quote": f"Quote {id}",
                 "source": "test",
-                "created_at": "now",
+                # timestamp column intentionally omitted
             }
 
         mock_get_quote.side_effect = mock_get
@@ -307,7 +301,8 @@ class TestExportQuotesJson:
         assert "id" in data[0]
         assert "quote" in data[0]
         assert "source" in data[0]
-        assert "created_at" in data[0]
+        # Data should only include id, quote and source keys
+        assert set(data[0].keys()) == {"id", "quote", "source"}
 
     def test_export_quotes_json_empty_list(self):
         """Test exporting empty quote list to JSON."""
@@ -340,7 +335,7 @@ class TestExportQuotesCsv:
 
         reader = csv.DictReader(StringIO(result))
         headers = reader.fieldnames
-        assert headers == ["id", "quote", "source", "created_at"]
+        assert headers == ["id", "quote", "source"]
 
     def test_export_quotes_csv_content(self, sample_quote_dicts: List[Dict[str, Any]]):
         """Test CSV content correctness."""
@@ -364,7 +359,7 @@ class TestExportQuotesCsv:
         reader = csv.DictReader(StringIO(result))
         rows = list(reader)
         assert len(rows) == 0
-        assert reader.fieldnames == ["id", "quote", "source", "created_at"]
+        assert reader.fieldnames == ["id", "quote", "source"]
 
 
 class TestExportQuotes:

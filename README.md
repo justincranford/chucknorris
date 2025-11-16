@@ -131,8 +131,7 @@ Chuck Norris counted to infinity. Twice.
   {
     "id": 1,
     "quote": "Chuck Norris can divide by zero.",
-    "source": "https://api.chucknorris.io/jokes/random",
-    "created_at": "2025-11-14 12:00:00"
+      "source": "https://api.chucknorris.io/jokes/random"
   }
 ]
 ```
@@ -140,8 +139,8 @@ Chuck Norris counted to infinity. Twice.
 #### CSV Format
 
 ```csv
-id,quote,source,created_at
-1,"Chuck Norris can divide by zero.","https://api.chucknorris.io/jokes/random","2025-11-14 12:00:00"
+id,quote,source
+1,"Chuck Norris can divide by zero.","https://api.chucknorris.io/jokes/random"
 ```
 
 ### Advanced Usage

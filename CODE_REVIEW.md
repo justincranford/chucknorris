@@ -140,33 +140,11 @@ optimal_threads = min(max(len(sources) // 5, 4), 20)
 
 **Recommendation:** Delete entirely. Sources are loaded from `sources.txt`.
 
-### 2.2 Generator Schema Inconsistency (High Priority)
+### 2.2 Generator Schema Inconsistency (Resolved)
 
-**Issue:** `generator.py` references `created_at` field that doesn't exist in database schema.
+**Summary:** All timestamp metadata references were removed from the codebase and tests. The project schema intentionally omits any timestamp column and exports now include only `id`, `quote`, and `source`.
 
-**Current Code (generator.py lines 229-233):**
-```python
-json_data = [
-    {
-        "id": quote["id"],
-        "quote": quote["quote"],
-        "source": quote["source"],
-        "created_at": quote["created_at"],  # KeyError! Field doesn't exist
-    }
-    for quote in quotes
-]
-```
-
-**Database Schema (scraper.py lines 243-249):**
-```python
-CREATE TABLE quotes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    quote TEXT NOT NULL UNIQUE,
-    source TEXT
-)
-```
-
-**Recommendation:** Remove all `created_at` references from generator.py (lines 229, 233, 250, 257, 265).
+**Status:** Resolved. Updated `generator.py`, `scraper.py`, tests, and docs accordingly.
 
 ### 2.3 Inconsistent Error Handling
 
@@ -494,7 +472,7 @@ def extract_quotes(content: str, source: str, content_type: str = "auto") -> Lis
 ## 10. Priority Summary
 
 ### Critical (Fix Immediately)
-1. **Generator schema bug:** Remove `created_at` references (causes runtime errors)
+1. **Generator schema bug:** Resolved — removed obsolete timestamp column reference (was causing runtime errors)
 2. **CSV deduplication:** Violates data integrity requirements
 
 ### High Priority

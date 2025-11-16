@@ -950,48 +950,8 @@ class TestExtractQuotesRouting:
         assert len(quotes) >= 1
 
 
-class TestDatabaseMigration:
-    """Test database migration functionality."""
-
-    def test_create_database_migrates_old_schema(self, tmp_path: Path):
-        """Test that create_database migrates from old schema with created_at column."""
-        db_path = tmp_path / "test_migrate.db"
-
-        # Create old schema database manually
-        conn = sqlite3.connect(str(db_path))
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            CREATE TABLE quotes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                quote TEXT NOT NULL UNIQUE,
-                source TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """
-        )
-        cursor.execute("INSERT INTO quotes (quote, source) VALUES (?, ?)", ("Old quote", "old_source"))
-        conn.commit()
-        conn.close()
-
-        # Run create_database which should migrate
-        create_database(str(db_path))
-
-        # Verify migration worked
-        with sqlite3.connect(str(db_path)) as conn:
-            cursor = conn.cursor()
-            cursor.execute("PRAGMA table_info(quotes)")
-            columns = [col[1] for col in cursor.fetchall()]
-            assert "created_at" not in columns
-            assert "id" in columns
-            assert "quote" in columns
-            assert "source" in columns
-
-            # Verify data was preserved
-            cursor.execute("SELECT quote, source FROM quotes")
-            rows = cursor.fetchall()
-            assert len(rows) == 1
-            assert rows[0] == ("Old quote", "old_source")
+# Database migration tests for legacy timestamp column were removed
+# since the project now uses a schema without that column.
 
 
 class TestFetchUrlEdgeCases:

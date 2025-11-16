@@ -228,40 +228,10 @@ def create_database(db_path: str) -> None:  # pragma: no cover
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     try:
-        # Check if table exists and has created_at column
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='quotes'")
         table_exists = cursor.fetchone()
 
-        if table_exists:
-            # Check columns
-            cursor.execute("PRAGMA table_info(quotes)")
-            columns = [col[1] for col in cursor.fetchall()]
-            if "created_at" in columns:
-                # Migrate: create new table without created_at, copy data, drop old
-                logging.info("Migrating database: removing created_at column")
-
-                cursor.execute(
-                    """
-                    CREATE TABLE quotes_new (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        quote TEXT NOT NULL UNIQUE,
-                        source TEXT
-                    )
-                """
-                )
-
-                cursor.execute("INSERT INTO quotes_new (quote, source) SELECT quote, source FROM quotes")
-
-                cursor.execute("DROP TABLE quotes")
-                cursor.execute("ALTER TABLE quotes_new RENAME TO quotes")
-
-                cursor.execute(
-                    """
-                    CREATE INDEX IF NOT EXISTS idx_quote ON quotes(quote)
-                """
-                )
-            # Else table is already in new format
-        else:
+        if not table_exists:
             # Create new table
             cursor.execute(
                 """
