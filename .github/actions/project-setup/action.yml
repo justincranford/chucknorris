@@ -4,8 +4,6 @@ description: 'Set up project environment and install dependencies'
 runs:
   using: 'composite'
   steps:
-    - uses: actions/checkout@v4
-
     - name: Set up Python 3.14
       uses: actions/setup-python@v5
       with:
