@@ -19,7 +19,7 @@
     "mhutchie.git-graph", // mhutchie: View a Git Graph of your repository, and perform Git actions from the graph.
     "eamodio.gitlens", // eamodio: Supercharge Git within VS Code — Visualize code authorship at a glance via Git blame annotations and CodeLens, seamlessly navigate and explore Git repositories, gain valuable insights via rich visualizations and powerful comparison commands, and so much more
     "yzhang.markdown-all-in-one", // yzhang: All you need to write Markdown (keyboard shortcuts, table of contents, auto preview and more)
-    "streetsidesoftware.code-spell-checker", // Street Side Software: Spelling checker for source code
+    "streetsidesoftware.code-spell-checker", // Street Side Software: Spelling checker for source code (see .vscode/cspell.json)
     "gruntfuggly.todo-tree", // gruntfuggly: Show TODO, FIXME, etc. comment tags in a tree view
     "mechatroner.rainbow-csv", // mechatroner: Highlight CSV and TSV files, Run SQL-like queries
   ],
