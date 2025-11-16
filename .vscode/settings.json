@@ -3,8 +3,8 @@
     // VS Code Copilot Customization Instructions
     // https://code.visualstudio.com/docs/copilot/customization/custom-instructions
     "github.copilot.enable": {
-        "markdown": true
-    }, // Enable Copilot for markdown
+        "*": true
+    }, // Enable Copilot for all languages by default (workspace-level)
     "github.copilot.chat.codeGeneration.useInstructionFiles": true,
     "github.copilot.chat.generateTests.codeLens": true, // Enable test generation code lens (experimental)
     "github.copilot.chat.editor.temporalContext.enabled": true, // Enable temporal context in editor (experimental)
@@ -20,6 +20,7 @@
     "git.enableSmartCommit": true, // Commit button is only enabled when you have staged changes
     "git.confirmSync": false, // Confirm git sync operations
     "git.openRepositoryInParentFolders": "always", // Open git repository in parent folders
+    "git.blame.editorDecoration.enabled": true,
 
     // GitLens Settings
     "gitlens.ai.model": "vscode", // GitLens AI model provider (experimental)
@@ -42,6 +43,8 @@
     // VS Code Files Settings
     // https://code.visualstudio.com/docs/getstarted/settings
     "files.encoding": "utf8", // File encoding to use
+    "files.insertFinalNewline": true, // Ensure files end with a newline
+    "files.trimFinalNewlines": true, //
     "files.trimTrailingWhitespace": true, // Trim trailing whitespace on save
     "files.associations": {
         "*.py": "python"
@@ -134,6 +137,7 @@
     "terminal.integrated.enableMultiLinePasteWarning": "never", // Enable multi-line paste warning
     "terminal.integrated.scrollback": 100000, // Terminal scrollback buffer size
     "workbench.editor.empty.hint": "hidden", // Show hint when no editor is open
+    "workbench.editor.enablePreview": false, // Disable preview editors (open files always open in a new tab)
 
     // VS Code Chat Settings
     // https://code.visualstudio.com/docs/copilot/chat/copilot-chat
