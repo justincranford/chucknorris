@@ -89,3 +89,9 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "if typing.TYPE_CHECKING:",
 ]
+
+[tool.node]
+dependencies = [
+    "node>=18.0.0",
+    "cspell>=8.0.0",
+]
