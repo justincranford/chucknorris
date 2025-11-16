@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Determine CPU count for parallel pre-commit runs
+if command -v nproc >/dev/null 2>&1; then
+  JOBS=$(nproc)
+elif [[ $(uname) == "Darwin" ]]; then
+  JOBS=$(sysctl -n hw.ncpu)
+else
+  JOBS=4
+fi
+
+# Run the standard pre-commit pre-commit stage (checks only, respecting hook config)
+exec pre-commit run --hook-stage pre-commit -j "$JOBS" "$@"

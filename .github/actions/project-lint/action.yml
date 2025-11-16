@@ -6,5 +6,13 @@ runs:
   steps:
     - name: Run pre-commit on all files
       run: |
-        pre-commit run --all-files --show-diff-on-failure -j 4
+        JOBS=$(nproc 2>/dev/null || echo 2)
+        echo "Using $JOBS parallel pre-commit jobs"
+        pre-commit run --all-files --show-diff-on-failure -j "$JOBS"
+      shell: bash
+    - name: Run pre-commit pre-push hooks
+      run: |
+        JOBS=$(nproc 2>/dev/null || echo 2)
+        echo "Running pre-push hooks with $JOBS jobs"
+        pre-commit run --all-files --hook-stage pre-push -j "$JOBS"
       shell: bash

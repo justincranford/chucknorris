@@ -125,7 +125,7 @@ repos:
       - id: pretty-format-json
         name: Pretty format JSON files
         args: [--autofix, --indent=2]
-        exclude: '\.vscode/.*\.json$'  # Skip VS Code settings with comments
+        exclude: '\.vscode/.*\.json$'  # Skip VS Code JSONC config files (JSON with comments)
 
       # Mixed line endings
       - id: mixed-line-ending

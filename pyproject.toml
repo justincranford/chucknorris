@@ -40,6 +40,10 @@ dev = [
     "types-requests>=2.32.0",
 ]
 
+[project.scripts]
+# Console script to install repo-level git hooks and pre-commit hooks
+install-hooks = "quotes.hooks:install"
+
 [tool.black]
 line-length = 200
 target-version = ['py313']
