@@ -424,6 +424,13 @@ class TestExtractQuotesFromHtml:
                 assert quotes == []
                 assert any("Failed to parse HTML" in record.message for record in caplog.records)
 
+            def test_extract_quotes_from_html_paragraph_heuristic(self):
+                """Test paragraph heuristic path when no blockquote or quote classes exist."""
+                html = "<html><body><p>Chuck Norris used to play Russian roulette with a fully loaded gun.</p></body></html>"
+                quotes = extract_quotes_from_html(html, "test_source")
+                assert len(quotes) == 1
+                assert "Chuck Norris" in quotes[0]["quote"]
+
 
 class TestExtractQuotes:
     """Tests for automatic quote extraction."""
@@ -554,6 +561,37 @@ class TestGetScrapedSources:
         scraped = get_scraped_sources("notfound.csv", "notfound.db")
         assert isinstance(scraped, set)
         assert len(scraped) == 0
+
+    def test_get_scraped_sources_csv_read_error(self, caplog: pytest.LogCaptureFixture, tmp_path: Path, monkeypatch):
+        """Test get_scraped_sources gracefully handles CSV read errors."""
+        bad_csv = tmp_path / "bad.csv"
+        # Create a normal DB so that DB reading still works
+        db_path = tmp_path / "quotes.db"
+        create_database(str(db_path))
+
+        # Patch open to raise an exception when attempting to read the CSV
+        def fake_open(*args, **kwargs):
+            raise Exception("Failed to open")
+
+        monkeypatch.setattr("builtins.open", fake_open)
+        with caplog.at_level(logging.DEBUG):
+            scraped = get_scraped_sources(str(bad_csv), str(db_path))
+            # Should continue and return set from DB if available (db has no entries)
+            assert isinstance(scraped, set)
+
+    def test_get_scraped_sources_db_read_error(self, tmp_path: Path, monkeypatch, caplog: pytest.LogCaptureFixture):
+        """Test get_scraped_sources gracefully handles DB read errors."""
+        csv_path = tmp_path / "sourced.csv"
+        with open(csv_path, "w", encoding="utf-8", newline="") as f:
+            f.write("source,quote\n")
+            f.write("https://csv-source.com,First quote\n")
+
+        # Make sqlite3.connect raise an exception
+        monkeypatch.setattr("sqlite3.connect", lambda *args, **kwargs: (_ for _ in ()).throw(Exception("boom")))
+
+        with caplog.at_level(logging.DEBUG):
+            scraped = get_scraped_sources(str(csv_path), "doesnotexist.db")
+            assert "https://csv-source.com" in scraped
 
 
 class TestScrapeSource:

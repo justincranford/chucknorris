@@ -231,6 +231,8 @@
     "Zscifu",
     "Zsviup",
     "ZURL",
-    "Zylia"
+    "Zylia",
+    "pythonjsonlogger",
+    "jsonlogger"
   ]
 }
