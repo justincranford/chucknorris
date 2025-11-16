@@ -1,27 +1,17 @@
 #!/usr/bin/env python3
-"""Thin wrapper that executes `.githooks/githooks.py` and forwards arguments.
+"""
+Single executable hook script (`.githooks/pre-commit`) that runs the
+repository's githook logic.
 
-This ensures Git (which expects a hook file named `pre-commit`) runs the
-`githooks.py` script with the correct arguments while keeping a single
-cross-platform Python script as the canonical hook implementation.
+This script imports and executes `githooks.hooks.main` so the CLI logic is
+implemented in the `githooks` package (for console scripts) while keeping a
+single entry point file in the hooks directory that Git will execute.
 """
 from __future__ import annotations
 
-import os
-import subprocess
 import sys
 
-
-def main() -> int:
-    this_dir = os.path.dirname(__file__)
-    script = os.path.join(this_dir, "githooks.py")
-    if not os.path.exists(script):
-        print(f"Unified githooks script not found: {script}", file=sys.stderr)
-        return 2
-    cmd = [sys.executable, script] + sys.argv[1:]
-    proc = subprocess.run(cmd)
-    return proc.returncode
-
+from githooks.hooks import main
 
 if __name__ == "__main__":
     sys.exit(main())
