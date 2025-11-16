@@ -21,7 +21,7 @@ A Python-based project to scrape Chuck Norris quotes from various online databas
 1. Clone the repository:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/justincranford/chucknorris.git
    cd chucknorris
    ```
 
@@ -38,13 +38,14 @@ A Python-based project to scrape Chuck Norris quotes from various online databas
 1. Install dependencies:
 
    ```bash
-   pip install -r requirements.txt
+   pip install -e ".[dev]"
    ```
 
 1. Install pre-commit hooks:
 
    ```bash
    pre-commit install
+   pre-commit install --hook-type commit-msg
    ```
 
 ## Quick Start
@@ -163,9 +164,11 @@ python scraper/scraper.py
 #### Options
 
 - `-s, --sources`: List of URLs or sources to scrape (space-separated)
-- `-o, --output`: Output database file path (default: `scraper/quotes.db`)
-- `-f, --format`: Output format (default: `sqlite`)
+- `-o, --output`: Output file path base (default: `scraper/quotes.db`)
+- `-f, --format`: Output format - `sqlite`, `csv`, or `both` (default: `both`)
 - `-v, --verbose`: Enable verbose logging
+- `-d, --dry-run, --dryrun`: Validate sources and simulate scraping without network calls
+- `-t, --threads, --thread`: Number of concurrent threads for parallel processing (default: 4)
 - `-h, --help`: Display help and usage examples
 
 #### Examples
@@ -179,6 +182,12 @@ python scraper/scraper.py --output ./my_quotes.db
 
 # Enable verbose logging
 python scraper/scraper.py --verbose
+
+# Dry run to validate sources without scraping
+python scraper/scraper.py --dry-run
+
+# Use 8 threads for parallel processing
+python scraper/scraper.py --threads 8
 
 # Scrape from specific sources
 python scraper/scraper.py --sources https://api.chucknorris.io/jokes/random
@@ -267,6 +276,8 @@ pre-commit run --all-files
 ```text
 chucknorris/
 ├── .github/
+│   ├── actions/            # Custom GitHub Actions
+│   ├── instructions/       # Copilot instruction files
 │   ├── workflows/          # CI/CD pipelines
 │   └── copilot-instructions.md
 ├── scraper/
@@ -276,14 +287,16 @@ chucknorris/
 │   └── sources.txt         # List of sources to scrape
 ├── quotes/
 │   └── generator.py        # Quote generation script
-├── scripts/                # Utility scripts
 ├── tests/                  # Unit tests
-│   ├── test_scraper.py
-│   └── test_generator.py
-├── .pre-commit-config.yaml
+│   ├── conftest.py         # Pytest configuration
+│   ├── test_scraper.py     # Scraper tests
+│   ├── test_scraper_cli.py # Scraper CLI tests
+│   ├── test_generator.py   # Generator tests
+│   └── test_generator_cli.py # Generator CLI tests
+├── .pre-commit-config.yaml # Pre-commit hooks configuration
 ├── .gitignore
-├── pyproject.toml          # Project configuration
-├── requirements.txt        # Python dependencies
+├── pyproject.toml          # Project configuration and dependencies
+├── LICENSE                 # AGPL license
 └── README.md
 ```
 
@@ -319,9 +332,9 @@ The generator module provides functionality to generate random Chuck Norris quot
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). See the `LICENSE` file for details.
 
 ## Acknowledgments
 
 - Chuck Norris for being awesome
-- Various Chuck Norris quote databases and APIs
+- The various Chuck Norris quote databases and APIs that make this project possible
