@@ -1,6 +1,11 @@
 import os
 import subprocess
 import sys
+from typing import Sequence
+
+
+def get_jobs() -> int:
+    return max(1, int(os.cpu_count() or 2))
 
 
 def install(_: None = None) -> int:
@@ -30,6 +35,42 @@ def install(_: None = None) -> int:
         print(str(e), file=sys.stderr)
         return 1
     return 0
+
+
+def run_pre_commit(args: Sequence[str] | None = None) -> int:
+    args = list(args or [])
+    cmd = [sys.executable, "-m", "pre_commit", "run", "--hook-stage", "pre-commit", "-j", str(get_jobs())] + args
+    result = subprocess.run(cmd)
+    return result.returncode
+
+
+def dev_setup(_: None = None) -> int:
+    """Install dev dependencies and register githooks
+
+    This will run `python -m pip install -e .[dev]` and then configure the git
+    hooks path and install pre-commit hooks.
+    """
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", ".[dev]"])
+    except subprocess.CalledProcessError as cpe:
+        print("Failed to install dev dependencies:", file=sys.stderr)
+        print(str(cpe), file=sys.stderr)
+        return cpe.returncode
+    # After installing dev deps, install hooks
+    return install()
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    argv = list(argv or sys.argv[1:])
+    # Simple arg handling
+    if not argv:
+        return run_pre_commit()
+    if argv[0] in ("-i", "--install"):
+        return install()
+    if argv[0] in ("-d", "--dev-setup"):
+        return dev_setup()
+    # otherwise forward args to pre-commit
+    return run_pre_commit(argv)
 
 
 if __name__ == "__main__":

@@ -1,56 +1,26 @@
 #!/usr/bin/env python3
-"""
-Single unified pre-commit hook script that supports both running hooks (default)
-and installing repo-level hooks via command-line flags.
+"""Thin wrapper that executes `.githooks/githooks.py` and forwards arguments.
 
-Usage:
-  .githooks/pre-commit         # Run pre-commit as a hook
-  .githooks/pre-commit -i      # Install hooks (configure core.hooksPath + pre-commit install)
-  .githooks/pre-commit --install  # same as -i
-
-The script delegates install logic to the `githooks.hooks.install` function to
-reuse the same code path used by `install-hooks`.
+This ensures Git (which expects a hook file named `pre-commit`) runs the
+`githooks.py` script with the correct arguments while keeping a single
+cross-platform Python script as the canonical hook implementation.
 """
 from __future__ import annotations
 
-import argparse
 import os
 import subprocess
 import sys
-from typing import Sequence
-
-from githooks.hooks import install as install_hooks
 
 
-def get_jobs() -> int:
-    # Prefer os.cpu_count() and fallback to 2
-    jobs = os.cpu_count() or 2
-    return max(1, int(jobs))
-
-
-def run_pre_commit(args: Sequence[str]) -> int:
-    jobs = get_jobs()
-    cmd = [sys.executable, "-m", "pre_commit", "run", "--hook-stage", "pre-commit", "-j", str(jobs)] + list(args)
-    # Using subprocess.run so that we can forward output cleanly
+def main() -> int:
+    this_dir = os.path.dirname(__file__)
+    script = os.path.join(this_dir, "githooks.py")
+    if not os.path.exists(script):
+        print(f"Unified githooks script not found: {script}", file=sys.stderr)
+        return 2
+    cmd = [sys.executable, script] + sys.argv[1:]
     proc = subprocess.run(cmd)
     return proc.returncode
-
-
-def parse_args(argv: Sequence[str]) -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Unified pre-commit runner and installer")
-    p.add_argument("-i", "--install", action="store_true", help="Install repository hooks and pre-commit hooks")
-    p.add_argument("args", nargs=argparse.REMAINDER, help="Arguments forwarded to pre-commit run")
-    return p.parse_args(argv)
-
-
-def main(argv: Sequence[str] | None = None) -> int:
-    argv = list(argv or sys.argv[1:])
-    parsed = parse_args(argv)
-
-    if parsed.install:
-        return install_hooks()
-
-    return run_pre_commit(parsed.args or [])
 
 
 if __name__ == "__main__":
