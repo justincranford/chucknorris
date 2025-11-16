@@ -1,7 +1,7 @@
 # GitHub Workflows Review - Chuck Norris Quotes Project
 
-**Review Date:** November 15, 2025  
-**Reviewer:** GitHub Copilot  
+**Review Date:** November 15, 2025
+**Reviewer:** GitHub Copilot
 **Scope:** CI/CD workflows and GitHub Actions
 
 ---
@@ -90,10 +90,10 @@ jobs:
     name: Dependency Review
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
 

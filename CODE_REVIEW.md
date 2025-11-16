@@ -1,7 +1,7 @@
 # Code Review - Chuck Norris Quotes Project
 
-**Review Date:** November 15, 2025  
-**Reviewer:** GitHub Copilot  
+**Review Date:** November 15, 2025
+**Reviewer:** GitHub Copilot
 **Scope:** Python code (scraper.py, generator.py) and test files
 
 ## Executive Summary
@@ -36,25 +36,25 @@ def get_quote_by_id(db_path: str, quote_id: int) -> Optional[Dict[str, Any]]:
 def generate_quotes(db_path: str, count: int, seed: Optional[int] = None) -> List[Dict[str, Any]]:
     if seed is not None:
         random.seed(seed)
-    
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     try:
         cursor.execute("SELECT id FROM quotes")
         all_ids = [row[0] for row in cursor.fetchall()]
-        
+
         actual_count = min(count, len(all_ids))
         selected_ids = random.choices(all_ids, k=count) if count > len(all_ids) else random.sample(all_ids, count)
-        
+
         # Single query with IN clause instead of N queries
         placeholders = ','.join('?' * len(selected_ids))
         cursor.execute(f"SELECT id, quote, source FROM quotes WHERE id IN ({placeholders})", selected_ids)
-        
+
         quotes = [{"id": row[0], "quote": row[1], "source": row[2]} for row in cursor.fetchall()]
     finally:
         cursor.close()
         conn.close()
-    
+
     return quotes
 ```
 
@@ -81,21 +81,21 @@ def save_quotes_to_csv(quotes: List[Dict[str, str]], csv_path: str) -> int:
         with open(csv_path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             existing_quotes = {row["quote"] for row in reader}
-    
+
     # Filter out duplicates
     new_quotes = [q for q in quotes if q["quote"] not in existing_quotes]
-    
+
     # Write all quotes (rewrite file to maintain order)
     with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=["source", "quote"])
         writer.writeheader()
-        
+
         # Write existing + new
         for quote_text in existing_quotes:
             writer.writerow({"source": "", "quote": quote_text})
         for quote in new_quotes:
             writer.writerow({"source": quote["source"], "quote": quote["quote"]})
-    
+
     return len(new_quotes)
 ```
 
@@ -318,7 +318,7 @@ class RateLimiter:
         self.max_requests = max_requests
         self.time_window = time_window
         self.requests = []
-    
+
     def wait_if_needed(self):
         now = datetime.now()
         self.requests = [r for r in self.requests if now - r < self.time_window]
@@ -356,14 +356,14 @@ def extract_quotes_from_html(content: str, source: str) -> List[Dict[str, str]]:
     except Exception as e:
         logging.error(f"Failed to parse HTML: {e}")
         return []
-    
+
     quotes = []
     for blockquote in soup.find_all("blockquote"):
         quote_text = blockquote.get_text(strip=True)
         if not quote_text:
             continue
         quotes.append({"quote": quote_text, "source": source})
-    
+
     return quotes
 ```
 
@@ -374,8 +374,8 @@ def extract_quotes_from_html(content: str, source: str) -> List[Dict[str, str]]:
 **Recommendation:** Create base extractor with common patterns:
 ```python
 def extract_quotes_generic(
-    content: str, 
-    source: str, 
+    content: str,
+    source: str,
     selectors: List[str],
     min_length: int = MIN_QUOTE_LENGTH,
     max_length: int = MAX_QUOTE_LENGTH,
@@ -384,7 +384,7 @@ def extract_quotes_generic(
     """Generic quote extractor with configurable selectors."""
     soup = BeautifulSoup(content, "lxml")
     quotes = []
-    
+
     for selector in selectors:
         for elem in soup.select(selector):
             text = elem.get_text(strip=True)
@@ -393,7 +393,7 @@ def extract_quotes_generic(
             if require_chuck_norris and "chuck norris" not in text.lower():
                 continue
             quotes.append({"quote": text, "source": source})
-    
+
     return quotes
 ```
 
@@ -443,7 +443,7 @@ def generate_quotes_streaming(db_path: str, count: int) -> Iterator[Dict[str, An
     try:
         cursor.execute("SELECT COUNT(*) FROM quotes")
         total = cursor.fetchone()[0]
-        
+
         for _ in range(count):
             offset = random.randint(0, total - 1)
             cursor.execute("SELECT id, quote, source FROM quotes LIMIT 1 OFFSET ?", (offset,))
@@ -481,7 +481,7 @@ def extract_quotes(content: str, source: str, content_type: str = "auto") -> Lis
 
     Returns:
         List of quote dictionaries with 'quote' and 'source' keys.
-    
+
     Examples:
         >>> content = '{"value": "Chuck Norris can divide by zero."}'
         >>> extract_quotes(content, "https://api.example.com", "json")
