@@ -3,9 +3,14 @@ import subprocess
 import sys
 from typing import Sequence
 
+DEFAULT_JOBS = 4
 
-def get_jobs() -> int:
-    return max(1, int(os.cpu_count() or 2))
+
+def get_jobs(override: int | None = None) -> int:
+    if override is not None:
+        return max(1, int(override))
+    # Default to a fixed JOBS value (4) for consistent performance
+    return DEFAULT_JOBS
 
 
 def install(_: None = None) -> int:
@@ -23,9 +28,30 @@ def install(_: None = None) -> int:
         # Set the git hooks path for this repository
         subprocess.check_call(["git", "config", "--local", "core.hooksPath", ".githooks"])
 
-        # Install pre-commit hooks into the current hooks path (pre-commit will use .git/hooks by default,
-        # because we already set core.hooksPath, pre-commit will honor it)
-        subprocess.check_call([sys.executable, "-m", "pre_commit", "install", "--install-hooks"])
+        # Ensure the repository hook file exists and is executable: we will *not* call
+        # `pre-commit install --install-hooks`, which writes platform-provided wrappers
+        # and could overwrite our single-file hook approach. Instead we keep a single
+        # canonical hook file here and mark it executable.
+        hook_path = os.path.join(hooks_dir, "pre-commit")
+        if not os.path.exists(hook_path):
+            # If our canonical hook doesn't exist for some reason, try to copy from the
+            # repo root's .githooks/pre-commit (we assume the file in the repo is the source)
+            repo_hook = os.path.join(os.getcwd(), ".githooks", "pre-commit")
+            if os.path.exists(repo_hook) and repo_hook != hook_path:
+                with open(repo_hook, "rb") as src, open(hook_path, "wb") as dst:
+                    dst.write(src.read())
+        # Make the hook executable.
+        try:
+            # POSIX chmod
+            st = os.stat(hook_path)
+            os.chmod(hook_path, st.st_mode | 0o111)
+        except Exception:
+            # On Windows, set the executable bit in git index
+            try:
+                subprocess.check_call(["git", "update-index", "--add", "--chmod=+x", hook_path])
+            except Exception:
+                # If we cannot set exec bit, continue — developers may still run hooks
+                pass
     except subprocess.CalledProcessError as cpe:
         print("Failed to install hooks:", file=sys.stderr)
         print(str(cpe), file=sys.stderr)
@@ -39,7 +65,22 @@ def install(_: None = None) -> int:
 
 def run_pre_commit(args: Sequence[str] | None = None) -> int:
     args = list(args or [])
-    cmd = [sys.executable, "-m", "pre_commit", "run", "--hook-stage", "pre-commit", "-j", str(get_jobs())] + args
+    # If the user passed a -j or --jobs in the forward args, prefer that
+    override = None
+    if args:
+        for i, a in enumerate(args):
+            if a == "-j" and i + 1 < len(args):
+                try:
+                    override = int(args[i + 1])
+                except ValueError:
+                    pass
+            if a.startswith("--jobs="):
+                try:
+                    override = int(a.split("=", 1)[1])
+                except ValueError:
+                    pass
+    jobs = get_jobs(override)
+    cmd = [sys.executable, "-m", "pre_commit", "run", "--hook-stage", "pre-commit", "-j", str(jobs)] + args
     result = subprocess.run(cmd)
     return result.returncode
 
@@ -56,8 +97,17 @@ def dev_setup(_: None = None) -> int:
         print("Failed to install dev dependencies:", file=sys.stderr)
         print(str(cpe), file=sys.stderr)
         return cpe.returncode
-    # After installing dev deps, install hooks
-    return install()
+    # After installing dev deps, ensure repo-level hooks are registered
+    code = install()
+    if code != 0:
+        return code
+    # Run a quick pre-commit check to validate hooks; uses a default 4 jobs concurrency
+    try:
+        subprocess.check_call([sys.executable, "-m", "pre_commit", "run", "--all-files", "--show-diff-on-failure", "-j", str(DEFAULT_JOBS)])
+    except subprocess.CalledProcessError as cpe:
+        # Return non-zero if pre-commit failed
+        return cpe.returncode
+    return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:

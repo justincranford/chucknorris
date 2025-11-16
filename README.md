@@ -48,6 +48,23 @@ A Python-based project to scrape Chuck Norris quotes from various online databas
    pre-commit install --hook-type commit-msg
    ```
 
+## Developer setup (quick)
+
+To set up the dev environment, install dev dependencies and register the repository-level hooks in one step, run:
+
+```bash
+pip install -e .[dev]
+dev-setup
+```
+
+Alternatively, if you have `make` installed, use:
+
+```bash
+make dev-setup
+```
+
+The `dev-setup` console script installs dev dependencies, sets `core.hooksPath` to `.githooks` (so Git runs the single hook script), and validates hooks by running `pre-commit run --all-files -j 4`.
+
 ## Quick Start
 
 ### 1. Scrape Chuck Norris Quotes
