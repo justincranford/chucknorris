@@ -1,21 +1,11 @@
-# PowerShell pre-commit wrapper
+# Minimal Windows wrapper: delegate to the unified Python script
 Param([String[]]$Args)
 
-# Determine CPU count on Windows
-$jobs = $env:NUMBER_OF_PROCESSORS
-if ([String]::IsNullOrEmpty($jobs)) { $jobs = 4 }
+$python = $env:PYTHON
+if ([string]::IsNullOrEmpty($python)) { $python = 'python' }
 
-# Build args: run pre-commit for pre-commit stage with job count
-$argList = @('--hook-stage', 'pre-commit', '-j', $jobs) + $Args
+$script = Join-Path $PSScriptRoot 'pre-commit'
 
-# Execute pre-commit and propagate exit code
-$psi = New-Object System.Diagnostics.ProcessStartInfo
-$psi.FileName = 'pre-commit'
-$psi.Arguments = ($argList -join ' ')
-$psi.RedirectStandardOutput = $true
-$psi.RedirectStandardError = $true
-$psi.UseShellExecute = $false
+& $python $script @Args
 
-$proc = [System.Diagnostics.Process]::Start($psi)
-$proc.WaitForExit()
-exit $proc.ExitCode
+exit $LASTEXITCODE
