@@ -15,12 +15,12 @@
 
 | File | **Applies To** | Description |
 | ------- | --------- | ----------- |
-| '01-01.copilot-tools.instructions.md' | tools | Tool usage guidelines |
-| '01-02.execution.instructions.md' | execution | Execution guidelines for scripts |
-| '01-03.preferred-libraries.instructions.md' | python | Preferred libraries and dependencies |
-| '02-01.project-context.instructions.md' | python | Project context and overview |
-| '02-02.coding.instructions.md' | python | Coding standards and style guidelines |
-| '02-03.testing.instructions.md' | python | Testing requirements and methodologies |
-| '02-04.data-integrity.instructions.md' | python | Data integrity requirements and deduplication |
-| '03-01.git.instructions.md' | development | Guidelines for making changes and commits |
-| '03-02.github.instructions.md' | github | GitHub workflow and best practices |
+| '01-01.copilot-tools.instructions.md' | ** | Tool usage guidelines |
+| '01-02.execution.instructions.md' | ** | Execution guidelines for scripts |
+| '01-03.preferred-libraries.instructions.md' | ** | Preferred libraries and dependencies |
+| '02-01.project-context.instructions.md' | ** | Project context and overview |
+| '02-02.coding.instructions.md' | ** | Coding standards and style guidelines |
+| '02-03.testing.instructions.md' | ** | Testing requirements and methodologies |
+| '02-04.data-integrity.instructions.md' | ** | Data integrity requirements and deduplication |
+| '03-01.git.instructions.md' | ** | Guidelines for making changes and commits |
+| '03-02.github.instructions.md' | ** | GitHub workflow and best practices |
