@@ -1,6 +1,9 @@
 {
   "language": "en,en-CA,en-US,fr,fr-FR,es,es-ES",
   "ignorePaths": [
+    ".cspellcache",
+    "scraper/quotes.csv",
+    "scraper/quotes.db",
     "docs/dictionaries/",
     "htmlcov/",
     "coverage.*",
@@ -9,8 +12,7 @@
     "node_modules/",
     ".cache/",
     "htmlcov/",
-    ".pytest_cache/",
-    ".cspellcache"
+    ".pytest_cache/"
   ],
   "dictionaries": [
     // ===== DICTIONARIES WITH .txt FILES =====
@@ -233,6 +235,7 @@
     "ZURL",
     "Zylia",
     "pythonjsonlogger",
-    "jsonlogger"
+    "jsonlogger",
+    "nosetests"
   ]
 }

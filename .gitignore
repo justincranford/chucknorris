@@ -40,9 +40,12 @@
 **/.cache
 **/nosetests.xml
 **/coverage.xml
+**/coverage.out
+**/coverage.html
 **/coverage.json
 **/coverage.lcov
 **/coverage_test
+**/*.test
 **/*.cover
 **/.hypothesis/
 **/.pytest_cache/
@@ -53,6 +56,7 @@
 **/env/
 **/.env
 **/ENV/
+**/output/
 
 # IDEs
 **/*.swp
@@ -68,3 +72,12 @@
 
 # Spell checker cache
 **/.cspellcache
+
+# ASN.1/DER/PEM encoded files
+**/*.pem
+**/*.der
+**/*.crt
+**/*.key
+**/*.csr
+**/*.pfx
+**/*.p12
