@@ -280,7 +280,7 @@ class TestExportQuotesText:
 class TestExportQuotesJson:
     """Tests for exporting quotes in JSON format."""
 
-    def test_export_quotes_json_valid(self, sample_quote_dicts: List[Dict[str, Any]]):
+    def test_export_quotes_json_valid(self, sample_quote_dicts: List[Dict[str, Any]]) -> None:
         """Test that exported JSON is valid."""
         output = StringIO()
         export_quotes_json(sample_quote_dicts, output)
@@ -304,7 +304,7 @@ class TestExportQuotesJson:
         # Data should only include id, quote and source keys
         assert set(data[0].keys()) == {"id", "quote", "source"}
 
-    def test_export_quotes_json_empty_list(self):
+    def test_export_quotes_json_empty_list(self) -> None:
         """Test exporting empty quote list to JSON."""
         output = StringIO()
         export_quotes_json([], output)
