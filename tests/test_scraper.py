@@ -10,9 +10,8 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 import requests
 
-from scraper.scraper import (
-    comment_out_source,
-    create_database,
+from scraper.fetcher import fetch_url
+from scraper.parser import (
     extract_quotes,
     extract_quotes_from_chucknorrisfacts_fr,
     extract_quotes_from_factinate,
@@ -20,16 +19,10 @@ from scraper.scraper import (
     extract_quotes_from_json,
     extract_quotes_from_parade,
     extract_quotes_from_thefactsite,
-    fetch_url,
-    get_scraped_sources,
-    load_sources,
-    save_quotes_to_csv,
-    save_quotes_to_db,
-    scrape_all_sources,
-    scrape_source,
-    setup_logging,
-    validate_sources,
 )
+from scraper.scraper import scrape_all_sources, scrape_source, setup_logging
+from scraper.storage import create_database, get_scraped_sources, save_quotes_to_csv, save_quotes_to_db
+from scraper.validator import comment_out_source, load_sources, validate_sources
 
 
 @pytest.fixture
@@ -104,7 +97,7 @@ class TestCreateDatabase:
 class TestCommentOutSource:
     """Tests for commenting out sources."""
 
-    @patch("scraper.scraper.SOURCES_FILE", "test_sources.txt")
+    @patch("scraper.validator.SOURCES_FILE", "test_sources.txt")
     def test_comment_out_source_success(self):
         """Test successfully commenting out a source."""
         # Create a test sources file
@@ -127,7 +120,7 @@ class TestCommentOutSource:
 
         os.remove("test_sources.txt")
 
-    @patch("scraper.scraper.SOURCES_FILE", "nonexistent.txt")
+    @patch("scraper.validator.SOURCES_FILE", "nonexistent.txt")
     def test_comment_out_source_file_not_found(self, caplog: pytest.LogCaptureFixture):
         """Test commenting out source when file doesn't exist."""
         with caplog.at_level(logging.ERROR):
@@ -138,7 +131,7 @@ class TestCommentOutSource:
 class TestLoadSources:
     """Tests for loading sources."""
 
-    @patch("scraper.scraper.SOURCES_FILE", "test_sources.txt")
+    @patch("scraper.validator.SOURCES_FILE", "test_sources.txt")
     def test_load_sources_success(self):
         """Test loading sources successfully."""
         # Create a test sources file
@@ -156,7 +149,7 @@ class TestLoadSources:
 
         os.remove("test_sources.txt")
 
-    @patch("scraper.scraper.SOURCES_FILE", "nonexistent.txt")
+    @patch("scraper.validator.SOURCES_FILE", "nonexistent.txt")
     def test_load_sources_file_not_found(self, caplog: pytest.LogCaptureFixture):
         """Test loading sources when file doesn't exist."""
         caplog.set_level(logging.WARNING)
@@ -239,7 +232,7 @@ class TestSaveQuotes:
 class TestFetchUrl:
     """Tests for URL fetching."""
 
-    @patch("scraper.scraper.requests.get")
+    @patch("scraper.fetcher.requests.get")
     def test_fetch_url_success(self, mock_get: MagicMock):
         """Test successful URL fetch."""
         mock_response = Mock()
@@ -251,15 +244,15 @@ class TestFetchUrl:
         assert result == "test content"
         mock_get.assert_called_once()
 
-    @patch("scraper.scraper.requests.get")
+    @patch("scraper.fetcher.requests.get")
     def test_fetch_url_timeout(self, mock_get: MagicMock):
         """Test URL fetch with timeout."""
         mock_get.side_effect = requests.exceptions.Timeout()
         result = fetch_url("https://example.com", retries=1)
         assert result is None
 
-    @patch("scraper.scraper.comment_out_source")
-    @patch("scraper.scraper.requests.get")
+    @patch("scraper.validator.comment_out_source")
+    @patch("scraper.fetcher.requests.get")
     def test_fetch_url_http_error(self, mock_get: MagicMock, mock_comment: MagicMock, caplog: pytest.LogCaptureFixture):
         """Test URL fetch with HTTP error."""
         with caplog.at_level(logging.WARNING):
@@ -274,8 +267,8 @@ class TestFetchUrl:
         assert any("Error fetching" in record.message for record in caplog.records)
         mock_comment.assert_called_once_with("https://example.com", "HTTP 404")
 
-    @patch("scraper.scraper.requests.get")
-    @patch("scraper.scraper.time.sleep")
+    @patch("scraper.fetcher.requests.get")
+    @patch("scraper.fetcher.time.sleep")
     def test_fetch_url_retry_logic(self, mock_sleep: MagicMock, mock_get: MagicMock, caplog: pytest.LogCaptureFixture):
         """Test retry logic on failure."""
         with caplog.at_level(logging.WARNING):
@@ -287,8 +280,8 @@ class TestFetchUrl:
         assert any("Error fetching" in record.message for record in caplog.records)
         assert any("Failed to fetch" in record.message for record in caplog.records)
 
-    @patch("scraper.scraper.requests.get")
-    @patch("scraper.scraper.time.sleep")
+    @patch("scraper.fetcher.requests.get")
+    @patch("scraper.fetcher.time.sleep")
     def test_fetch_url_http_error_causes_sleep(self, mock_sleep: MagicMock, mock_get: MagicMock, caplog: pytest.LogCaptureFixture):
         """Test that HTTPError (non-404) triggers retries with sleep between attempts."""
         mock_response = Mock()
@@ -597,9 +590,9 @@ class TestGetScrapedSources:
 class TestScrapeSource:
     """Tests for scraping a single source."""
 
-    @patch("scraper.scraper.fetch_url")
-    @patch("scraper.scraper.extract_quotes")
-    @patch("scraper.scraper.save_quotes_to_db")
+    @patch("scraper.fetcher.fetch_url")
+    @patch("scraper.parser.extract_quotes")
+    @patch("scraper.storage.save_quotes_to_db")
     def test_scrape_source_success(self, mock_save: MagicMock, mock_extract: MagicMock, mock_fetch: MagicMock, temp_db: str):
         """Test successful source scraping."""
         mock_fetch.return_value = "content"
@@ -609,15 +602,15 @@ class TestScrapeSource:
         result = scrape_source("https://example.com", temp_db, None, ["sqlite"])
         assert result == 1
 
-    @patch("scraper.scraper.fetch_url")
+    @patch("scraper.fetcher.fetch_url")
     def test_scrape_source_fetch_failure(self, mock_fetch: MagicMock, temp_db: str):
         """Test scraping when fetch fails."""
         mock_fetch.return_value = None
         result = scrape_source("https://example.com", temp_db, None, ["sqlite"])
         assert result == 0
 
-    @patch("scraper.scraper.fetch_url")
-    @patch("scraper.scraper.extract_quotes")
+    @patch("scraper.fetcher.fetch_url")
+    @patch("scraper.parser.extract_quotes")
     def test_scrape_source_no_quotes_found(self, mock_extract: MagicMock, mock_fetch: MagicMock, temp_db: str):
         """Test scraping when no quotes are found."""
         mock_fetch.return_value = "content"
@@ -625,9 +618,9 @@ class TestScrapeSource:
         result = scrape_source("https://example.com", temp_db, None, ["sqlite"])
         assert result == 0
 
-    @patch("scraper.scraper.fetch_url")
-    @patch("scraper.scraper.extract_quotes")
-    @patch("scraper.scraper.save_quotes_to_db")
+    @patch("scraper.fetcher.fetch_url")
+    @patch("scraper.parser.extract_quotes")
+    @patch("scraper.storage.save_quotes_to_db")
     def test_scrape_source_unknown_format(self, mock_save: MagicMock, mock_extract: MagicMock, mock_fetch: MagicMock, temp_db: str, caplog: pytest.LogCaptureFixture):
         """Test scraping with unknown format logs warning."""
         mock_fetch.return_value = "content"
@@ -957,8 +950,8 @@ class TestExtractQuotesRouting:
 class TestFetchUrlEdgeCases:
     """Test edge cases in fetch_url function."""
 
-    @patch("scraper.scraper.requests.get")
-    @patch("scraper.scraper.comment_out_source")
+    @patch("scraper.fetcher.requests.get")
+    @patch("scraper.validator.comment_out_source")
     def test_fetch_url_http_404_error(self, mock_comment_out: MagicMock, mock_get: MagicMock):
         """Test fetch_url handles HTTP 404 errors by commenting out source."""
         # Create a realistic HTTPError
@@ -974,8 +967,8 @@ class TestFetchUrlEdgeCases:
         assert result is None
         mock_comment_out.assert_called_once_with("http://example.com/404", "HTTP 404")
 
-    @patch("scraper.scraper.requests.get")
-    @patch("scraper.scraper.time.sleep")
+    @patch("scraper.fetcher.requests.get")
+    @patch("scraper.fetcher.time.sleep")
     def test_fetch_url_request_exception_final_return_none(self, mock_sleep: MagicMock, mock_get: MagicMock):
         """Test fetch_url returns None after exhausting retries on RequestException."""
         mock_get.side_effect = requests.exceptions.RequestException("Network error")
@@ -988,8 +981,8 @@ class TestFetchUrlEdgeCases:
         # Should have slept once between retries
         mock_sleep.assert_called_once()
 
-    @patch("scraper.scraper.requests.get")
-    @patch("scraper.scraper.comment_out_source")
+    @patch("scraper.fetcher.requests.get")
+    @patch("scraper.validator.comment_out_source")
     def test_fetch_url_http_error_non_404_logs_warning(self, mock_comment_out: MagicMock, mock_get: MagicMock, caplog: pytest.LogCaptureFixture):
         """Test fetch_url logs warning for HTTP errors that are not 404."""
         # Create HTTPError that's not 404
@@ -1007,8 +1000,8 @@ class TestFetchUrlEdgeCases:
         assert "Error fetching http://example.com/500: 500 Server Error" in caplog.text
         mock_comment_out.assert_not_called()
 
-    @patch("scraper.scraper.requests.get")
-    @patch("scraper.scraper.time.sleep")
+    @patch("scraper.fetcher.requests.get")
+    @patch("scraper.fetcher.time.sleep")
     def test_fetch_url_request_exception_logs_warning(self, mock_sleep: MagicMock, mock_get: MagicMock, caplog: pytest.LogCaptureFixture):
         """Test fetch_url logs warning for RequestException."""
         mock_get.side_effect = requests.exceptions.RequestException("Connection timeout")
