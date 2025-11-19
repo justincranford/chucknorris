@@ -7,10 +7,10 @@ This module handles extracting quotes from various content formats (JSON, HTML).
 import json
 import logging
 import re
-from typing import Dict, List
+from typing import Any, Dict, List
 
 
-def _get_beautifulsoup() -> type:
+def _get_beautifulsoup() -> Any:
     """Get BeautifulSoup class, allowing for test patching from scraper.scraper."""
     try:
         import scraper.scraper as scraper_module

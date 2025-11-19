@@ -32,4 +32,3 @@ __all__ = [
     "setup_logging",
     "validate_sources",
 ]
-

@@ -10,11 +10,11 @@ import argparse
 import concurrent.futures
 import logging
 import sys
-import time
+import time  # noqa: F401 - imported for test patching
 from typing import List, Optional
 
-import requests
-from bs4 import BeautifulSoup
+import requests  # noqa: F401 - imported for test patching
+from bs4 import BeautifulSoup  # noqa: F401 - imported for test patching
 
 from scraper.fetcher import fetch_url
 from scraper.loader import create_database, save_quotes_to_csv, save_quotes_to_db
@@ -27,7 +27,16 @@ from scraper.parser import (
     extract_quotes_from_parade,
     extract_quotes_from_thefactsite,
 )
-from scraper.utils import DEFAULT_OUTPUT_CSV, DEFAULT_OUTPUT_DB, SOURCES_FILE, comment_out_source, get_scraped_sources, load_sources, setup_logging, validate_sources
+from scraper.utils import (  # noqa: F401 - SOURCES_FILE imported for test patching
+    DEFAULT_OUTPUT_CSV,
+    DEFAULT_OUTPUT_DB,
+    SOURCES_FILE,
+    comment_out_source,
+    get_scraped_sources,
+    load_sources,
+    setup_logging,
+    validate_sources,
+)
 
 # Re-export for backward compatibility
 __all__ = [
