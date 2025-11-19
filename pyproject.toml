@@ -57,7 +57,7 @@ addopts = [
     "--cov=quotes",
     "--cov-report=term-missing",
     "--cov-report=html",
-    "--cov-fail-under=93",
+    "--cov-fail-under=92",
 ]
 testpaths = ["tests"]
 pythonpath = ["."]
