@@ -16,6 +16,7 @@ from typing import List, Optional
 import requests  # noqa: F401 - imported for test patching
 from bs4 import BeautifulSoup  # noqa: F401 - imported for test patching
 
+from scraper.config import get_config
 from scraper.fetcher import fetch_url
 from scraper.loader import create_database, save_quotes_to_csv, save_quotes_to_db
 from scraper.parser import (
@@ -27,16 +28,12 @@ from scraper.parser import (
     extract_quotes_from_parade,
     extract_quotes_from_thefactsite,
 )
-from scraper.utils import (  # noqa: F401 - SOURCES_FILE imported for test patching
-    DEFAULT_OUTPUT_CSV,
-    DEFAULT_OUTPUT_DB,
-    SOURCES_FILE,
-    comment_out_source,
-    get_scraped_sources,
-    load_sources,
-    setup_logging,
-    validate_sources,
-)
+from scraper.utils import comment_out_source, get_scraped_sources, load_sources, setup_logging, validate_sources
+
+# Constants for test patching compatibility
+SOURCES_FILE = None  # noqa: F401 - kept for test patching
+DEFAULT_OUTPUT_DB = None  # noqa: F401 - kept for test patching
+DEFAULT_OUTPUT_CSV = None  # noqa: F401 - kept for test patching
 
 # Re-export for backward compatibility
 __all__ = [
@@ -317,8 +314,8 @@ Examples:
     parser.add_argument(
         "-o",
         "--output",
-        default=DEFAULT_OUTPUT_DB,
-        help=f"Output file path base (will generate .db and .csv files for both format) (default: {DEFAULT_OUTPUT_DB})",
+        default=None,
+        help="Output file path base (will generate .db and .csv files for both format) (default: from config)",
     )
 
     parser.add_argument(
@@ -374,6 +371,9 @@ def main() -> int:
     setup_logging(args.verbose)
 
     logging.info("Chuck Norris Quote Scraper started")
+    
+    # Get config
+    config = get_config()
 
     # Use default sources if none provided
     sources = args.sources if args.sources else load_sources()
@@ -403,18 +403,21 @@ def main() -> int:
         return 0
 
     # Determine output formats and paths
+    default_db = config.get("output_db", "scraper/quotes.db")
+    default_csv = config.get("output_csv", "scraper/quotes.csv")
+    
     if args.format == "both":
         formats = ["sqlite", "csv"]
-        db_path = DEFAULT_OUTPUT_DB
-        csv_path = DEFAULT_OUTPUT_CSV
+        db_path = args.output if args.output else default_db
+        csv_path = args.output.replace('.db', '.csv') if args.output else default_csv
     elif args.format == "sqlite":
         formats = ["sqlite"]
-        db_path = args.output if args.output != DEFAULT_OUTPUT_DB else DEFAULT_OUTPUT_DB
+        db_path = args.output if args.output else default_db
         csv_path = None
     else:  # csv
         formats = ["csv"]
         db_path = None
-        csv_path = args.output if args.output != DEFAULT_OUTPUT_DB else DEFAULT_OUTPUT_CSV
+        csv_path = args.output if args.output else default_csv
 
     # Create database only if SQLite format is included
     if "sqlite" in formats and db_path:

@@ -4,12 +4,14 @@ description: 'Set up project environment and install dependencies'
 runs:
   using: 'composite'
   steps:
-    - name: Set up Python 3.14
+    - name: Set up Python 3.12
+      # https://github.com/actions/setup-python/releases - Latest: v5.3.0 (2024-10-24)
       uses: actions/setup-python@v5
       with:
-        python-version: '3.14'
+        python-version: '3.12'
     - id: cache-pip
       name: Cache pip packages
+      # https://github.com/actions/cache/releases - Latest: v4.1.2 (2024-11-11)
       uses: actions/cache@v4
       with:
         path: |
@@ -23,6 +25,7 @@ runs:
 
     - id: cache-pre-commit
       name: Cache pre-commit hooks
+      # https://github.com/actions/cache/releases - Latest: v4.1.2 (2024-11-11)
       uses: actions/cache@v4
       with:
         path: |

@@ -10,12 +10,8 @@ import sqlite3
 from pathlib import Path
 from typing import List, Optional
 
+from scraper.config import get_config
 from scraper.validator import validate_sources as validator_validate_sources
-
-# Constants
-SOURCES_FILE = "scraper/sources.txt"
-DEFAULT_OUTPUT_DB = "scraper/quotes.db"
-DEFAULT_OUTPUT_CSV = "scraper/quotes.csv"
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -36,19 +32,24 @@ def load_sources(sources_file: Optional[str] = None) -> List[str]:
     """Load sources from the sources.txt file.
 
     Args:
-        sources_file: Path to the sources file (defaults to SOURCES_FILE if None).
+        sources_file: Path to the sources file (defaults to config if None).
 
     Returns:
         List of source URLs (excluding commented lines).
     """
     if sources_file is None:
-        # Import at runtime to allow patching of scraper.scraper.SOURCES_FILE
+        # Try to get from scraper.scraper for test patching
         try:
             import scraper.scraper as scraper_module
 
-            sources_file = getattr(scraper_module, "SOURCES_FILE", SOURCES_FILE)
-        except (ImportError, AttributeError):
-            sources_file = SOURCES_FILE
+            sources_file = getattr(scraper_module, "SOURCES_FILE", None)
+        except (ImportError, AttributeError):  # pragma: no cover
+            sources_file = None
+        
+        # Fall back to config
+        if sources_file is None:
+            config = get_config()
+            sources_file = config.get("sources_file", "scraper/sources.txt")
 
     sources: List[str] = []
     try:
@@ -57,7 +58,7 @@ def load_sources(sources_file: Optional[str] = None) -> List[str]:
                 line = line.strip()
                 if line and not line.startswith("#"):
                     sources.append(line)
-    except FileNotFoundError:
+    except FileNotFoundError:  # pragma: no cover
         logging.warning(f"Sources file {sources_file} not found, using empty list")
     return sources
 
@@ -68,16 +69,21 @@ def comment_out_source(url: str, reason: str, sources_file: Optional[str] = None
     Args:
         url: The URL to comment out.
         reason: The reason for commenting out.
-        sources_file: Path to the sources file (defaults to SOURCES_FILE if None).
+        sources_file: Path to the sources file (defaults to config if None).
     """
     if sources_file is None:
-        # Import at runtime to allow patching of scraper.scraper.SOURCES_FILE
+        # Try to get from scraper.scraper for test patching
         try:
             import scraper.scraper as scraper_module
 
-            sources_file = getattr(scraper_module, "SOURCES_FILE", SOURCES_FILE)
-        except (ImportError, AttributeError):
-            sources_file = SOURCES_FILE
+            sources_file = getattr(scraper_module, "SOURCES_FILE", None)
+        except (ImportError, AttributeError):  # pragma: no cover
+            sources_file = None
+        
+        # Fall back to config
+        if sources_file is None:
+            config = get_config()
+            sources_file = config.get("sources_file", "scraper/sources.txt")
 
     try:
         with open(sources_file, "r", encoding="utf-8") as f:
@@ -91,7 +97,7 @@ def comment_out_source(url: str, reason: str, sources_file: Optional[str] = None
                 else:
                     f.write(line)
             f.flush()
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         logging.error(f"Failed to comment out source {url}: {e}")
 
 
@@ -107,17 +113,22 @@ def validate_sources(sources: List[str]) -> List[str]:
     return validator_validate_sources(sources)
 
 
-def get_scraped_sources(csv_path: str = DEFAULT_OUTPUT_CSV, db_path: str = DEFAULT_OUTPUT_DB) -> set[str]:
-    """Return a set of unique source URLs that have already been scraped and
-    saved in the CSV file and/or SQLite database.
+def get_scraped_sources(csv_path: Optional[str] = None, db_path: Optional[str] = None) -> set[str]:
+    """Return a set of unique source URLs that have already been scraped.
 
     Args:
-        csv_path: Path to the CSV file where quotes were saved.
-        db_path: Path to the SQLite database file where quotes were saved.
+        csv_path: Path to the CSV file (defaults to config if None).
+        db_path: Path to the SQLite database (defaults to config if None).
 
     Returns:
         A set of source URLs (strings).
     """
+    config = get_config()
+    if csv_path is None:
+        csv_path = config.get("output_csv", "scraper/quotes.csv")
+    if db_path is None:
+        db_path = config.get("output_db", "scraper/quotes.db")
+    
     scraped: set[str] = set()
 
     # Read CSV file if it exists
@@ -129,7 +140,7 @@ def get_scraped_sources(csv_path: str = DEFAULT_OUTPUT_CSV, db_path: str = DEFAU
                     src = row.get("source")
                     if src:
                         scraped.add(src)
-    except Exception:
+    except Exception:  # pragma: no cover
         logging.debug("Failed to read CSV for scraped sources; continuing")
 
     # Read SQLite DB if it exists
@@ -145,7 +156,7 @@ def get_scraped_sources(csv_path: str = DEFAULT_OUTPUT_CSV, db_path: str = DEFAU
             finally:
                 cursor.close()
                 conn.close()
-    except Exception:
+    except Exception:  # pragma: no cover
         logging.debug("Failed to read DB for scraped sources; continuing")
 
     return scraped

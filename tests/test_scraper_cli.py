@@ -29,7 +29,7 @@ class TestParseArguments:
         """Test default argument values."""
         with patch.object(sys, "argv", ["scraper.py"]):
             args = parse_arguments()
-            assert args.output == "scraper/quotes.db"
+            assert args.output is None  # Now from config
             assert args.format == "both"
             assert args.verbose is False
             assert args.sources is None
@@ -276,8 +276,8 @@ class TestMain:
         mock_scrape.assert_called_once()
         call_args = mock_scrape.call_args
         assert call_args[0][3] == ["sqlite", "csv"]  # formats is the 4th positional arg
-        assert call_args[0][1] == "scraper/quotes.db"  # db_path (default for both)
-        assert call_args[0][2] == "scraper/quotes.csv"  # csv_path (default for both)
+        assert call_args[0][1] == "test.db"  # db_path (from args.output)
+        assert call_args[0][2] == "test.csv"  # csv_path (derived from args.output)
 
     @patch("scraper.scraper.scrape_all_sources")
     @patch("scraper.scraper.create_database")

@@ -1,0 +1,11 @@
+{
+  "sources_file": "scraper/sources.txt",
+  "output_db": "scraper/quotes.db",
+  "output_csv": "scraper/quotes.csv",
+  "max_retries": 3,
+  "retry_delay": 3,
+  "request_timeout": 10,
+  "max_workers": 4,
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+  "verbose": false
+}

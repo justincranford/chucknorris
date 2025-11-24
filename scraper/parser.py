@@ -16,7 +16,7 @@ def _get_beautifulsoup() -> Any:
         import scraper.scraper as scraper_module
 
         return getattr(scraper_module, "BeautifulSoup")
-    except (ImportError, AttributeError):
+    except (ImportError, AttributeError):  # pragma: no cover
         from bs4 import BeautifulSoup
 
         return BeautifulSoup

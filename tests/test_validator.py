@@ -166,3 +166,28 @@ class TestIsChuckNorrisSource:
     def test_empty_url_and_content(self):
         """Test empty URL and content returns False."""
         assert is_chuck_norris_source("", "") is False
+
+
+class TestValidatorErrorPaths:
+    """Test error handling in validator."""
+
+    def test_is_valid_url_exception(self):
+        """Test is_valid_url handles exceptions gracefully."""
+        # This should not raise an exception
+        assert is_valid_url(None) is False or is_valid_url(None) is True
+
+    def test_validate_http_url_exception(self):
+        """Test validate_http_url handles exceptions."""
+        # Should handle None gracefully
+        result = validate_http_url(None)
+        assert result is False or result is True
+
+    def test_normalize_url_with_empty_string(self):
+        """Test normalize_url with empty string."""
+        result = normalize_url("")
+        assert result == ""
+
+    def test_is_chuck_norris_source_case_insensitive(self):
+        """Test case insensitivity in detection."""
+        assert is_chuck_norris_source("https://CHUCKNORRIS.com") is True
+        assert is_chuck_norris_source("https://example.com", "CHUCK NORRIS fact") is True

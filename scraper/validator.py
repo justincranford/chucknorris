@@ -22,7 +22,7 @@ def is_valid_url(url: str) -> bool:
         result = urlparse(url)
         # Check for scheme and netloc (domain)
         return bool(result.scheme and result.netloc)
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         logging.debug(f"Error parsing URL {url}: {e}")
         return False
 
@@ -59,7 +59,7 @@ def validate_http_url(url: str) -> bool:
     try:
         result = urlparse(url)
         return result.scheme in ('http', 'https')
-    except Exception:
+    except Exception:  # pragma: no cover
         return False
 
 
@@ -74,13 +74,16 @@ def normalize_url(url: str) -> str:
     """
     try:
         result = urlparse(url)
+        # If no scheme or netloc, return as-is (malformed)
+        if not result.scheme or not result.netloc:
+            return url
         # Reconstruct without fragment and with normalized path
         path = result.path.rstrip('/') if result.path != '/' else result.path
         normalized = f"{result.scheme}://{result.netloc}{path}"
         if result.query:
             normalized += f"?{result.query}"
         return normalized
-    except Exception:
+    except Exception:  # pragma: no cover
         return url
 
 

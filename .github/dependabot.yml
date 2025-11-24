@@ -1,11 +1,17 @@
+# Dependabot configuration for automatic dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
 version: 2
 updates:
+  # Python dependencies
   - package-ecosystem: pip
     directory: '/'
     schedule:
       interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
+      day: sunday
+      time: "01:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
     labels:
       - dependencies
       - python
@@ -13,12 +19,16 @@ updates:
       prefix: chore
       prefix-development: chore
       include: scope
+
+  # GitHub Actions
   - package-ecosystem: github-actions
     directory: '/'
     schedule:
       interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
+      day: sunday
+      time: "01:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
     labels:
       - dependencies
       - github-actions

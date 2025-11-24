@@ -19,6 +19,7 @@ jobs:
       contents: read
     steps:
     - name: Checkout repository
+      # https://github.com/actions/checkout/releases - Latest: v4.2.2 (2024-10-31)
       uses: actions/checkout@v4
     - uses: ./.github/actions/project-setup
     - uses: ./.github/actions/project-lint
@@ -29,6 +30,7 @@ jobs:
       contents: read
     steps:
     - name: Checkout repository
+      # https://github.com/actions/checkout/releases - Latest: v4.2.2 (2024-10-31)
       uses: actions/checkout@v4
     - uses: ./.github/actions/project-setup
     - uses: ./.github/actions/project-test
@@ -39,6 +41,7 @@ jobs:
       contents: read
     steps:
     - name: Checkout repository
+      # https://github.com/actions/checkout/releases - Latest: v4.2.2 (2024-10-31)
       uses: actions/checkout@v4
     - uses: ./.github/actions/project-setup
     - uses: ./.github/actions/project-benchmark
