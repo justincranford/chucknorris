@@ -13,6 +13,7 @@ from scraper.parser import (
     extract_quotes_from_thefactsite,
 )
 from scraper.utils import comment_out_source, get_scraped_sources, load_sources, setup_logging, validate_sources
+from scraper.validator import is_chuck_norris_source, is_valid_url, normalize_url, validate_http_url
 
 __all__ = [
     "fetch_url",
@@ -31,4 +32,8 @@ __all__ = [
     "load_sources",
     "setup_logging",
     "validate_sources",
+    "is_valid_url",
+    "is_chuck_norris_source",
+    "normalize_url",
+    "validate_http_url",
 ]

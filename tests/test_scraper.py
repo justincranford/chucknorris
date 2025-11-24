@@ -1093,3 +1093,306 @@ class TestExtractQuotesFromJsonBranches:
         assert len(quotes) == 2
         assert quotes[0]["quote"] == "Valid quote"
         assert quotes[1]["quote"] == "Another valid quote"
+
+
+class TestParserFallbackPaths:
+    """Test fallback exception paths in parser module."""
+
+    @patch("scraper.parser.scraper_module", None)
+    def test_get_beautifulsoup_fallback(self):
+        """Test _get_beautifulsoup fallback when scraper module not available."""
+        from scraper.parser import extract_quotes_from_html
+        
+        # Should still work with fallback to bs4.BeautifulSoup
+        html = "<p>Chuck Norris doesn't need a browser.</p>"
+        quotes = extract_quotes_from_html(html, "test")
+        assert isinstance(quotes, list)
+
+    def test_extract_quotes_from_html_with_numbered_list(self):
+        """Test extracting quotes from numbered HTML list."""
+        html = """
+        <html>
+            <body>
+                <p>1. Chuck Norris can compile syntax errors.</p>
+                <p>2. Chuck Norris doesn't use debuggers; bugs fix themselves.</p>
+            </body>
+        </html>
+        """
+        quotes = extract_quotes_from_html(html, "test_source")
+        assert len(quotes) >= 2
+
+
+class TestUtilsDynamicImports:
+    """Test dynamic import fallback paths in utils module."""
+
+    def test_load_sources_with_explicit_file(self):
+        """Test load_sources with explicit file parameter."""
+        import tempfile
+        import os
+        
+        # Create a temporary sources file
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+            f.write("https://example1.com\n")
+            f.write("# Commented source\n")
+            f.write("https://example2.com\n")
+            temp_file = f.name
+        
+        try:
+            from scraper.utils import load_sources
+            sources = load_sources(temp_file)
+            assert len(sources) == 2
+            assert "https://example1.com" in sources
+            assert "https://example2.com" in sources
+        finally:
+            os.unlink(temp_file)
+
+    def test_comment_out_source_with_explicit_file(self):
+        """Test comment_out_source with explicit file parameter."""
+        import tempfile
+        import os
+        
+        # Create a temporary sources file
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+            f.write("https://example1.com\n")
+            f.write("https://example2.com\n")
+            temp_file = f.name
+        
+        try:
+            from scraper.utils import comment_out_source
+            comment_out_source("https://example2.com", "Test reason", temp_file)
+            
+            with open(temp_file, 'r') as f:
+                content = f.read()
+            
+            assert "# [Test reason] https://example2.com" in content
+            assert "https://example1.com" in content
+        finally:
+            os.unlink(temp_file)
+
+
+class TestFetcherEdgeCases:
+    """Test edge cases in fetcher module."""
+
+    @patch("scraper.scraper.requests.get")
+    def test_fetch_url_all_retries_exhausted(self, mock_get: MagicMock):
+        """Test fetch_url when all retries are exhausted."""
+        mock_get.side_effect = requests.exceptions.Timeout("Timeout")
+        
+        result = fetch_url("http://example.com", retries=2)
+        
+        assert result is None
+        assert mock_get.call_count == 2
+
+
+class TestScraperEdgeCases:
+    """Test edge cases in main scraper module."""
+
+    def test_scrape_source_with_no_formats(self):
+        """Test scrape_source with empty formats list."""
+        with patch("scraper.scraper.fetch_url") as mock_fetch:
+            mock_fetch.return_value = '{"value": "Test quote"}'
+            
+            result = scrape_source("http://example.com", None, None, [])
+            
+            # Should return 0 since no formats to save
+            assert result == 0
+
+    def test_validate_sources_with_invalid_urls(self):
+        """Test validate_sources with various invalid URLs."""
+        from scraper.utils import validate_sources
+        
+        invalid_sources = [
+            "not-a-url",
+            "ftp://example.com",  # Valid URL but unusual scheme
+            "",
+            "http://",
+        ]
+        
+        valid = validate_sources(invalid_sources)
+        
+        # Should filter out invalid URLs
+        assert len(valid) <= 2  # Only ftp might be valid depending on parsing
+
+
+class TestExtractQuotesErrorPaths:
+    """Test error handling paths in extract_quotes functions."""
+
+    def test_extract_quotes_from_parade_empty_content(self):
+        """Test extract_quotes_from_parade with empty content."""
+        quotes = extract_quotes_from_parade("", "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_from_thefactsite_empty_content(self):
+        """Test extract_quotes_from_thefactsite with empty content."""
+        quotes = extract_quotes_from_thefactsite("", "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_from_chucknorrisfacts_fr_empty_content(self):
+        """Test extract_quotes_from_chucknorrisfacts_fr with empty content."""
+        quotes = extract_quotes_from_chucknorrisfacts_fr("", "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_from_factinate_empty_content(self):
+        """Test extract_quotes_from_factinate with empty content."""
+        quotes = extract_quotes_from_factinate("", "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_routing_unknown_source(self):
+        """Test extract_quotes routes to generic HTML for unknown sources."""
+        html = '<blockquote>Chuck Norris uses goto statements.</blockquote>'
+        quotes = extract_quotes(html, "http://unknown-source.com")
+        assert len(quotes) >= 1
+
+
+class TestParserFallbackPaths:
+    """Test fallback exception paths in parser module."""
+
+    def test_extract_quotes_from_html_with_chuck_norris_content(self):
+        """Test extracting quotes from HTML with Chuck Norris mentions."""
+        html = """
+        <html>
+            <body>
+                <p>Chuck Norris can compile syntax errors.</p>
+                <p>Regular text without Chuck Norris.</p>
+                <p>Chuck Norris doesn't use debuggers; bugs fix themselves.</p>
+            </body>
+        </html>
+        """
+        quotes = extract_quotes_from_html(html, "test_source")
+        # Should extract paragraphs mentioning Chuck Norris
+        assert len(quotes) >= 2
+        assert all("chuck norris" in q["quote"].lower() for q in quotes)
+
+
+class TestUtilsDynamicImports:
+    """Test dynamic import fallback paths in utils module."""
+
+    def test_load_sources_with_explicit_file(self):
+        """Test load_sources with explicit file parameter."""
+        import tempfile
+        import os
+        
+        # Create a temporary sources file
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+            f.write("https://example1.com\n")
+            f.write("# Commented source\n")
+            f.write("https://example2.com\n")
+            temp_file = f.name
+        
+        try:
+            from scraper.utils import load_sources
+            sources = load_sources(temp_file)
+            assert len(sources) == 2
+            assert "https://example1.com" in sources
+            assert "https://example2.com" in sources
+        finally:
+            os.unlink(temp_file)
+
+    def test_comment_out_source_with_explicit_file(self):
+        """Test comment_out_source with explicit file parameter."""
+        import tempfile
+        import os
+        
+        # Create a temporary sources file
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+            f.write("https://example1.com\n")
+            f.write("https://example2.com\n")
+            temp_file = f.name
+        
+        try:
+            from scraper.utils import comment_out_source
+            comment_out_source("https://example2.com", "Test reason", temp_file)
+            
+            with open(temp_file, 'r') as f:
+                content = f.read()
+            
+            assert "# [Test reason] https://example2.com" in content
+            assert "https://example1.com" in content
+        finally:
+            os.unlink(temp_file)
+
+
+class TestFetcherEdgeCases:
+    """Test edge cases in fetcher module."""
+
+    @patch("scraper.scraper.requests.get")
+    @patch("scraper.scraper.time.sleep")
+    def test_fetch_url_all_retries_exhausted_returns_none(self, mock_sleep, mock_get):
+        """Test fetch_url returns None when all retries exhausted."""
+        mock_get.side_effect = requests.exceptions.Timeout("Timeout")
+        
+        result = fetch_url("http://example.com", retries=3)
+        
+        assert result is None
+        assert mock_get.call_count == 3
+        # Should sleep between retries (not after last one)
+        assert mock_sleep.call_count == 2
+
+
+class TestScraperEdgeCases:
+    """Test edge cases in main scraper module."""
+
+    def test_scrape_source_with_no_formats(self):
+        """Test scrape_source with empty formats list."""
+        with patch("scraper.scraper.fetch_url") as mock_fetch:
+            mock_fetch.return_value = '{"value": "Test quote"}'
+            
+            result = scrape_source("http://example.com", None, None, [])
+            
+            # Should return 0 since no formats to save
+            assert result == 0
+
+    def test_scrape_source_with_unknown_format(self):
+        """Test scrape_source with unknown format."""
+        with patch("scraper.scraper.fetch_url") as mock_fetch, \
+             patch("scraper.scraper.extract_quotes") as mock_extract:
+            mock_fetch.return_value = '{"value": "Test quote"}'
+            mock_extract.return_value = [{"quote": "Test", "source": "http://example.com"}]
+            
+            result = scrape_source("http://example.com", None, None, ["unknown_format"])
+            
+            # Should return 0 for unknown format
+            assert result == 0
+
+
+class TestExtractQuotesErrorPaths:
+    """Test error handling paths in extract_quotes functions."""
+
+    def test_extract_quotes_from_parade_empty_content(self):
+        """Test extract_quotes_from_parade with empty content."""
+        quotes = extract_quotes_from_parade("", "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_from_thefactsite_empty_content(self):
+        """Test extract_quotes_from_thefactsite with empty content."""
+        quotes = extract_quotes_from_thefactsite("", "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_from_chucknorrisfacts_fr_empty_content(self):
+        """Test extract_quotes_from_chucknorrisfacts_fr with empty content."""
+        quotes = extract_quotes_from_chucknorrisfacts_fr("", "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_from_factinate_empty_content(self):
+        """Test extract_quotes_from_factinate with empty content."""
+        quotes = extract_quotes_from_factinate("", "test_source")
+        assert quotes == []
+
+    def test_extract_quotes_routing_unknown_source(self):
+        """Test extract_quotes routes to generic HTML for unknown sources."""
+        html = '<blockquote>Chuck Norris uses goto statements.</blockquote>'
+        quotes = extract_quotes(html, "http://unknown-source.com")
+        assert len(quotes) >= 1
+
+    def test_extract_quotes_auto_detect_json(self):
+        """Test extract_quotes auto-detects JSON content."""
+        json_content = '{"value": "Chuck Norris invented JSON before it existed."}'
+        quotes = extract_quotes(json_content, "test_source", content_type="auto")
+        assert len(quotes) == 1
+        assert quotes[0]["quote"] == "Chuck Norris invented JSON before it existed."
+
+    def test_extract_quotes_auto_detect_html(self):
+        """Test extract_quotes auto-detects HTML content."""
+        html_content = '<p>Chuck Norris writes HTML with his mind.</p>'
+        quotes = extract_quotes(html_content, "test_source", content_type="auto")
+        assert isinstance(quotes, list)

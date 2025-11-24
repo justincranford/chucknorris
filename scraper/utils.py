@@ -9,7 +9,8 @@ import logging
 import sqlite3
 from pathlib import Path
 from typing import List, Optional
-from urllib.parse import urlparse
+
+from scraper.validator import validate_sources as validator_validate_sources
 
 # Constants
 SOURCES_FILE = "scraper/sources.txt"
@@ -103,19 +104,7 @@ def validate_sources(sources: List[str]) -> List[str]:
     Returns:
         List of valid URLs.
     """
-    valid_sources: List[str] = []
-
-    for source in sources:
-        try:
-            result = urlparse(source)
-            if all([result.scheme, result.netloc]):
-                valid_sources.append(source)
-            else:
-                logging.warning(f"Invalid URL: {source}")
-        except Exception as e:
-            logging.warning(f"Error parsing URL {source}: {e}")
-
-    return valid_sources
+    return validator_validate_sources(sources)
 
 
 def get_scraped_sources(csv_path: str = DEFAULT_OUTPUT_CSV, db_path: str = DEFAULT_OUTPUT_DB) -> set[str]:
