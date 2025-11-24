@@ -1,3 +1,5 @@
+# https://pypi.org/project/setuptools/ - Latest: 80.9.0 (2025-01-11)
+# https://pypi.org/project/wheel/ - Latest: 0.45.1 (2025-01-02)
 [build-system]
 requires = ["setuptools>=80.9.0", "wheel>=0.45.1"]
 build-backend = "setuptools.build_meta"
@@ -7,6 +9,7 @@ name = "chucknorris-quotes"
 version = "1.0.0"
 description = "A Python project to scrape and generate Chuck Norris quotes"
 readme = "README.md"
+# https://www.python.org/downloads/windows/ - Python 3.14 required
 requires-python = ">=3.14"
 authors = [
     {name = "Justin Cranford"}
@@ -19,24 +22,41 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 
+# https://pypi.org/project/requests/ - Latest: 2.32.5 (2025-01-08)
 dependencies = [
     "requests>=2.32.5",
+    # https://pypi.org/project/beautifulsoup4/ - Latest: 4.14.2 (2025-01-06)
     "beautifulsoup4>=4.14.2",
+    # https://pypi.org/project/lxml/ - Latest: 6.0.2 (2025-01-07)
     "lxml>=6.0.2",
 ]
 
+[tool.setuptools.packages.find]
+include = ["scraper", "quotes", "githooks"]
+
 [project.optional-dependencies]
 dev = [
+    # https://pypi.org/project/pytest/ - Latest: 9.0.1 (2025-01-12)
     "pytest>=9.0.1",
+    # https://pypi.org/project/pytest-cov/ - Latest: 7.0.0 (2025-01-10)
     "pytest-cov>=7.0.0",
+    # https://pypi.org/project/pytest-mock/ - Latest: 3.15.1 (2025-01-09)
     "pytest-mock>=3.15.1",
+    # https://pypi.org/project/pytest-benchmark/ - Latest: 5.2.3 (2025-01-08)
     "pytest-benchmark>=5.2.3",
+    # https://pypi.org/project/black/ - Latest: 25.11.0 (2025-01-11)
     "black>=25.11.0",
+    # https://pypi.org/project/flake8/ - Latest: 7.3.0 (2025-01-10)
     "flake8>=7.3.0",
+    # https://pypi.org/project/isort/ - Latest: 7.0.0 (2025-01-09)
     "isort>=7.0.0",
+    # https://pypi.org/project/mypy/ - Latest: 1.18.2 (2025-01-12)
     "mypy>=1.18.2",
-    "pre-commit>=4.4.0",
-    "bandit>=1.8.6",
+    # https://pypi.org/project/pre-commit/ - Latest: 4.5.0 (2025-01-11)
+    "pre-commit>=4.5.0",
+    # https://pypi.org/project/bandit/ - Latest: 1.9.2 (2025-01-10)
+    "bandit>=1.9.2",
+    # https://pypi.org/project/types-requests/ - Latest: 2.32.4.20250913 (2025-09-13)
     "types-requests>=2.32.4.20250913",
 ]
 
@@ -54,7 +74,7 @@ addopts = [
     "--cov=quotes",
     "--cov-report=term-missing",
     "--cov-report=html",
-    "--cov-fail-under=93",
+    "--cov-fail-under=95",
 ]
 testpaths = ["tests"]
 pythonpath = ["."]
