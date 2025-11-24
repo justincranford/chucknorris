@@ -1102,7 +1102,7 @@ class TestParserFallbackPaths:
     def test_get_beautifulsoup_fallback(self):
         """Test _get_beautifulsoup fallback when scraper module not available."""
         from scraper.parser import extract_quotes_from_html
-        
+
         # Should still work with fallback to bs4.BeautifulSoup
         html = "<p>Chuck Norris doesn't need a browser.</p>"
         quotes = extract_quotes_from_html(html, "test")
@@ -1127,18 +1127,19 @@ class TestUtilsDynamicImports:
 
     def test_load_sources_with_explicit_file(self):
         """Test load_sources with explicit file parameter."""
-        import tempfile
         import os
-        
+        import tempfile
+
         # Create a temporary sources file
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
             f.write("https://example1.com\n")
             f.write("# Commented source\n")
             f.write("https://example2.com\n")
             temp_file = f.name
-        
+
         try:
             from scraper.utils import load_sources
+
             sources = load_sources(temp_file)
             assert len(sources) == 2
             assert "https://example1.com" in sources
@@ -1148,22 +1149,23 @@ class TestUtilsDynamicImports:
 
     def test_comment_out_source_with_explicit_file(self):
         """Test comment_out_source with explicit file parameter."""
-        import tempfile
         import os
-        
+        import tempfile
+
         # Create a temporary sources file
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
             f.write("https://example1.com\n")
             f.write("https://example2.com\n")
             temp_file = f.name
-        
+
         try:
             from scraper.utils import comment_out_source
+
             comment_out_source("https://example2.com", "Test reason", temp_file)
-            
-            with open(temp_file, 'r') as f:
+
+            with open(temp_file, "r") as f:
                 content = f.read()
-            
+
             assert "# [Test reason] https://example2.com" in content
             assert "https://example1.com" in content
         finally:
@@ -1177,9 +1179,9 @@ class TestFetcherEdgeCases:
     def test_fetch_url_all_retries_exhausted(self, mock_get: MagicMock):
         """Test fetch_url when all retries are exhausted."""
         mock_get.side_effect = requests.exceptions.Timeout("Timeout")
-        
+
         result = fetch_url("http://example.com", retries=2)
-        
+
         assert result is None
         assert mock_get.call_count == 2
 
@@ -1191,25 +1193,25 @@ class TestScraperEdgeCases:
         """Test scrape_source with empty formats list."""
         with patch("scraper.scraper.fetch_url") as mock_fetch:
             mock_fetch.return_value = '{"value": "Test quote"}'
-            
+
             result = scrape_source("http://example.com", None, None, [])
-            
+
             # Should return 0 since no formats to save
             assert result == 0
 
     def test_validate_sources_with_invalid_urls(self):
         """Test validate_sources with various invalid URLs."""
         from scraper.utils import validate_sources
-        
+
         invalid_sources = [
             "not-a-url",
             "ftp://example.com",  # Valid URL but unusual scheme
             "",
             "http://",
         ]
-        
+
         valid = validate_sources(invalid_sources)
-        
+
         # Should filter out invalid URLs
         assert len(valid) <= 2  # Only ftp might be valid depending on parsing
 
@@ -1239,7 +1241,7 @@ class TestExtractQuotesErrorPaths:
 
     def test_extract_quotes_routing_unknown_source(self):
         """Test extract_quotes routes to generic HTML for unknown sources."""
-        html = '<blockquote>Chuck Norris uses goto statements.</blockquote>'
+        html = "<blockquote>Chuck Norris uses goto statements.</blockquote>"
         quotes = extract_quotes(html, "http://unknown-source.com")
         assert len(quotes) >= 1
 
@@ -1269,18 +1271,19 @@ class TestUtilsDynamicImports:
 
     def test_load_sources_with_explicit_file(self):
         """Test load_sources with explicit file parameter."""
-        import tempfile
         import os
-        
+        import tempfile
+
         # Create a temporary sources file
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
             f.write("https://example1.com\n")
             f.write("# Commented source\n")
             f.write("https://example2.com\n")
             temp_file = f.name
-        
+
         try:
             from scraper.utils import load_sources
+
             sources = load_sources(temp_file)
             assert len(sources) == 2
             assert "https://example1.com" in sources
@@ -1290,22 +1293,23 @@ class TestUtilsDynamicImports:
 
     def test_comment_out_source_with_explicit_file(self):
         """Test comment_out_source with explicit file parameter."""
-        import tempfile
         import os
-        
+        import tempfile
+
         # Create a temporary sources file
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
             f.write("https://example1.com\n")
             f.write("https://example2.com\n")
             temp_file = f.name
-        
+
         try:
             from scraper.utils import comment_out_source
+
             comment_out_source("https://example2.com", "Test reason", temp_file)
-            
-            with open(temp_file, 'r') as f:
+
+            with open(temp_file, "r") as f:
                 content = f.read()
-            
+
             assert "# [Test reason] https://example2.com" in content
             assert "https://example1.com" in content
         finally:
@@ -1320,9 +1324,9 @@ class TestFetcherEdgeCases:
     def test_fetch_url_all_retries_exhausted_returns_none(self, mock_sleep, mock_get):
         """Test fetch_url returns None when all retries exhausted."""
         mock_get.side_effect = requests.exceptions.Timeout("Timeout")
-        
+
         result = fetch_url("http://example.com", retries=3)
-        
+
         assert result is None
         assert mock_get.call_count == 3
         # Should sleep between retries (not after last one)
@@ -1336,21 +1340,20 @@ class TestScraperEdgeCases:
         """Test scrape_source with empty formats list."""
         with patch("scraper.scraper.fetch_url") as mock_fetch:
             mock_fetch.return_value = '{"value": "Test quote"}'
-            
+
             result = scrape_source("http://example.com", None, None, [])
-            
+
             # Should return 0 since no formats to save
             assert result == 0
 
     def test_scrape_source_with_unknown_format(self):
         """Test scrape_source with unknown format."""
-        with patch("scraper.scraper.fetch_url") as mock_fetch, \
-             patch("scraper.scraper.extract_quotes") as mock_extract:
+        with patch("scraper.scraper.fetch_url") as mock_fetch, patch("scraper.scraper.extract_quotes") as mock_extract:
             mock_fetch.return_value = '{"value": "Test quote"}'
             mock_extract.return_value = [{"quote": "Test", "source": "http://example.com"}]
-            
+
             result = scrape_source("http://example.com", None, None, ["unknown_format"])
-            
+
             # Should return 0 for unknown format
             assert result == 0
 
@@ -1380,7 +1383,7 @@ class TestExtractQuotesErrorPaths:
 
     def test_extract_quotes_routing_unknown_source(self):
         """Test extract_quotes routes to generic HTML for unknown sources."""
-        html = '<blockquote>Chuck Norris uses goto statements.</blockquote>'
+        html = "<blockquote>Chuck Norris uses goto statements.</blockquote>"
         quotes = extract_quotes(html, "http://unknown-source.com")
         assert len(quotes) >= 1
 
@@ -1393,7 +1396,7 @@ class TestExtractQuotesErrorPaths:
 
     def test_extract_quotes_auto_detect_html(self):
         """Test extract_quotes auto-detects HTML content."""
-        html_content = '<p>Chuck Norris writes HTML with his mind.</p>'
+        html_content = "<p>Chuck Norris writes HTML with his mind.</p>"
         quotes = extract_quotes(html_content, "test_source", content_type="auto")
         assert isinstance(quotes, list)
 
@@ -1403,34 +1406,35 @@ class TestConfigIntegration:
 
     def test_scraper_uses_config(self):
         """Test that scraper uses config values."""
-        from scraper.config import reset_config, get_config
-        
+        from scraper.config import get_config, reset_config
+
         reset_config()
         config = get_config()
-        
+
         # Config should be initialized
         assert config.get("max_retries") == 3
         assert config.get("max_workers") == 4
 
     def test_load_sources_fallback_to_config(self):
         """Test load_sources falls back to config when file not from scraper.scraper."""
-        from scraper.utils import load_sources
-        import tempfile
         import os
-        from scraper.config import reset_config, get_config
-        
+        import tempfile
+
+        from scraper.config import get_config, reset_config
+        from scraper.utils import load_sources
+
         reset_config()
-        
+
         # Create a test sources file
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
             f.write("https://config-test.com\n")
             temp_file = f.name
-        
+
         try:
             # Set config to use temp file
             config = get_config()
             config.set("sources_file", temp_file)
-            
+
             # Load without specifying file
             sources = load_sources()
             assert "https://config-test.com" in sources
@@ -1523,9 +1527,9 @@ class TestGetScrapedSourcesConfig:
 
     def test_get_scraped_sources_uses_config_defaults(self):
         """Test get_scraped_sources uses config when paths not provided."""
-        from scraper.utils import get_scraped_sources
         from scraper.config import reset_config
-        
+        from scraper.utils import get_scraped_sources
+
         reset_config()
         # Call without parameters - should use config
         sources = get_scraped_sources()

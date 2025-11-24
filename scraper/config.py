@@ -34,10 +34,10 @@ class Config:
             config_file: Path to JSON config file (optional).
         """
         self._config: Dict[str, Any] = self.DEFAULTS.copy()
-        
+
         if config_file and Path(config_file).exists():
             self.load_from_file(config_file)
-        
+
         self.load_from_env()
 
     def load_from_file(self, config_file: str) -> None:
@@ -47,7 +47,7 @@ class Config:
             config_file: Path to JSON config file.
         """
         try:
-            with open(config_file, 'r') as f:
+            with open(config_file, "r") as f:
                 file_config = json.load(f)
                 self._config.update(file_config)
                 logging.debug(f"Loaded config from {config_file}")
@@ -59,7 +59,7 @@ class Config:
 
         Environment variables should be prefixed with CN_ (Chuck Norris).
         """
-        env_mappings = {
+        env_mappings: Dict[str, Any] = {
             "CN_SOURCES_FILE": "sources_file",
             "CN_OUTPUT_DB": "output_db",
             "CN_OUTPUT_CSV": "output_csv",
@@ -68,7 +68,7 @@ class Config:
             "CN_REQUEST_TIMEOUT": ("request_timeout", int),
             "CN_MAX_WORKERS": ("max_workers", int),
             "CN_USER_AGENT": "user_agent",
-            "CN_VERBOSE": ("verbose", lambda x: x.lower() in ('true', '1', 'yes')),
+            "CN_VERBOSE": ("verbose", lambda x: x.lower() in ("true", "1", "yes")),
         }
 
         for env_var, config_key in env_mappings.items():
@@ -77,7 +77,7 @@ class Config:
                 if isinstance(config_key, tuple):
                     key, converter = config_key
                     try:
-                        self._config[key] = converter(value)
+                        self._config[key] = converter(value)  # type: ignore
                     except (ValueError, TypeError) as e:  # pragma: no cover
                         logging.warning(f"Invalid value for {env_var}: {e}")
                 else:

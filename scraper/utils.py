@@ -45,7 +45,7 @@ def load_sources(sources_file: Optional[str] = None) -> List[str]:
             sources_file = getattr(scraper_module, "SOURCES_FILE", None)
         except (ImportError, AttributeError):  # pragma: no cover
             sources_file = None
-        
+
         # Fall back to config
         if sources_file is None:
             config = get_config()
@@ -79,7 +79,7 @@ def comment_out_source(url: str, reason: str, sources_file: Optional[str] = None
             sources_file = getattr(scraper_module, "SOURCES_FILE", None)
         except (ImportError, AttributeError):  # pragma: no cover
             sources_file = None
-        
+
         # Fall back to config
         if sources_file is None:
             config = get_config()
@@ -128,7 +128,7 @@ def get_scraped_sources(csv_path: Optional[str] = None, db_path: Optional[str] =
         csv_path = config.get("output_csv", "scraper/quotes.csv")
     if db_path is None:
         db_path = config.get("output_db", "scraper/quotes.db")
-    
+
     scraped: set[str] = set()
 
     # Read CSV file if it exists

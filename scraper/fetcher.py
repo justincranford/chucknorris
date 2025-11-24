@@ -26,11 +26,11 @@ def fetch_url(url: str, retries: Optional[int] = None) -> Optional[str]:
     config = get_config()
     if retries is None:
         retries = config.get("max_retries", 3)
-    
+
     retry_delay = config.get("retry_delay", 3)
     timeout = config.get("request_timeout", 10)
     user_agent = config.get("user_agent", "Mozilla/5.0")
-    
+
     headers = {"User-Agent": user_agent}
 
     for attempt in range(retries):

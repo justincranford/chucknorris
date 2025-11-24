@@ -27,7 +27,7 @@ class TestConfig:
 
     def test_load_from_file(self):
         """Test loading configuration from JSON file."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             json.dump({"max_retries": 5, "max_workers": 8}, f)
             config_file = f.name
 
@@ -100,7 +100,7 @@ class TestConfig:
 
     def test_load_from_invalid_json_file(self):
         """Test loading from invalid JSON file."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             f.write("not valid json{")
             config_file = f.name
 
@@ -121,7 +121,7 @@ class TestConfig:
             ("0", False),
             ("no", False),
         ]
-        
+
         for value, expected in test_cases:
             os.environ["CN_VERBOSE"] = value
             try:

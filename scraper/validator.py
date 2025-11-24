@@ -58,7 +58,7 @@ def validate_http_url(url: str) -> bool:
     """
     try:
         result = urlparse(url)
-        return result.scheme in ('http', 'https')
+        return result.scheme in ("http", "https")
     except Exception:  # pragma: no cover
         return False
 
@@ -78,7 +78,7 @@ def normalize_url(url: str) -> str:
         if not result.scheme or not result.netloc:
             return url
         # Reconstruct without fragment and with normalized path
-        path = result.path.rstrip('/') if result.path != '/' else result.path
+        path = result.path.rstrip("/") if result.path != "/" else result.path
         normalized = f"{result.scheme}://{result.netloc}{path}"
         if result.query:
             normalized += f"?{result.query}"
@@ -98,14 +98,14 @@ def is_chuck_norris_source(url: str, content: str = "") -> bool:
         True if likely a Chuck Norris source, False otherwise.
     """
     url_lower = url.lower()
-    
+
     # Check URL for Chuck Norris indicators
-    cn_indicators = ['chucknorris', 'chuck-norris', 'chuck_norris', 'cn-facts', 'norris']
+    cn_indicators = ["chucknorris", "chuck-norris", "chuck_norris", "cn-facts", "norris"]
     if any(indicator in url_lower for indicator in cn_indicators):
         return True
-    
+
     # Check content if provided
-    if content and 'chuck norris' in content.lower():
+    if content and "chuck norris" in content.lower():
         return True
-    
+
     return False

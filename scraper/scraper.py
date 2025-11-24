@@ -371,7 +371,7 @@ def main() -> int:
     setup_logging(args.verbose)
 
     logging.info("Chuck Norris Quote Scraper started")
-    
+
     # Get config
     config = get_config()
 
@@ -405,11 +405,11 @@ def main() -> int:
     # Determine output formats and paths
     default_db = config.get("output_db", "scraper/quotes.db")
     default_csv = config.get("output_csv", "scraper/quotes.csv")
-    
+
     if args.format == "both":
         formats = ["sqlite", "csv"]
         db_path = args.output if args.output else default_db
-        csv_path = args.output.replace('.db', '.csv') if args.output else default_csv
+        csv_path = args.output.replace(".db", ".csv") if args.output else default_csv
     elif args.format == "sqlite":
         formats = ["sqlite"]
         db_path = args.output if args.output else default_db
