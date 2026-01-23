@@ -25,6 +25,7 @@ class Config:
         "max_workers": 4,
         "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         "verbose": False,
+        "profanity_filter_type": "better_profanity",  # default filter
     }
 
     def __init__(self, config_file: Optional[str] = None):
@@ -69,6 +70,7 @@ class Config:
             "CN_MAX_WORKERS": ("max_workers", int),
             "CN_USER_AGENT": "user_agent",
             "CN_VERBOSE": ("verbose", lambda x: x.lower() in ("true", "1", "yes")),
+            "CN_PROFANITY_FILTER_TYPE": "profanity_filter_type",
         }
 
         for env_var, config_key in env_mappings.items():

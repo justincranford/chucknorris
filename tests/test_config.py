@@ -3,9 +3,7 @@
 import json
 import os
 import tempfile
-from pathlib import Path
-
-import pytest
+...existing code...
 
 from scraper.config import Config, get_config, reset_config
 

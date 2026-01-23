@@ -1095,7 +1095,7 @@ class TestExtractQuotesFromJsonBranches:
         assert quotes[1]["quote"] == "Another valid quote"
 
 
-class TestParserFallbackPaths:
+...existing code...
     """Test fallback exception paths in parser module."""
 
     @patch("scraper.parser.scraper_module", None)
@@ -1122,7 +1122,7 @@ class TestParserFallbackPaths:
         assert len(quotes) >= 2
 
 
-class TestUtilsDynamicImports:
+...existing code...
     """Test dynamic import fallback paths in utils module."""
 
     def test_load_sources_with_explicit_file(self):
@@ -1172,7 +1172,7 @@ class TestUtilsDynamicImports:
             os.unlink(temp_file)
 
 
-class TestFetcherEdgeCases:
+...existing code...
     """Test edge cases in fetcher module."""
 
     @patch("scraper.scraper.requests.get")
@@ -1186,7 +1186,7 @@ class TestFetcherEdgeCases:
         assert mock_get.call_count == 2
 
 
-class TestScraperEdgeCases:
+...existing code...
     """Test edge cases in main scraper module."""
 
     def test_scrape_source_with_no_formats(self):
@@ -1216,7 +1216,7 @@ class TestScraperEdgeCases:
         assert len(valid) <= 2  # Only ftp might be valid depending on parsing
 
 
-class TestExtractQuotesErrorPaths:
+...existing code...
     """Test error handling paths in extract_quotes functions."""
 
     def test_extract_quotes_from_parade_empty_content(self):

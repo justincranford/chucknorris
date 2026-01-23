@@ -60,7 +60,6 @@ __all__ = [
 ]
 
 
-
 def scrape_source(source_url: str, db_path: Optional[str], csv_path: Optional[str], formats: List[str]) -> int:
     """Scrape quotes from a single source.
 
@@ -82,16 +81,37 @@ def scrape_source(source_url: str, db_path: Optional[str], csv_path: Optional[st
 
     quotes = extract_quotes(content, source_url)
 
-    if not quotes:
-        logging.warning(f"No quotes found at {source_url}")
+    # Transform step: profanity filtering and normalization
+    from scraper.config import get_config
+    from scraper.profanity_filter import ProfanityFilterType, filter_quotes, get_filtered_quotes
+
+    config = get_config()
+    filter_type_str = config.get("profanity_filter_type", "better_profanity")
+    try:
+        filter_type = ProfanityFilterType(filter_type_str)
+    except ValueError:
+        logging.warning(f"Unknown profanity filter type '{filter_type_str}', defaulting to better_profanity")
+        filter_type = ProfanityFilterType.BETTER_PROFANITY
+
+    # Get filtered and clean quotes
+    clean_quotes = filter_quotes(quotes, filter_type)
+    filtered_quotes = get_filtered_quotes(quotes, filter_type)
+    # Save filtered quotes to filtered.txt
+    if filtered_quotes:
+        with open("scraper/filtered.txt", "a", encoding="utf-8") as f:
+            for fq in filtered_quotes:
+                f.write(fq + "\n")
+
+    if not clean_quotes:
+        logging.warning(f"No quotes found at {source_url} after filtering")
         return 0
 
     total_saved = 0
     for fmt in formats:
         if fmt == "csv" and csv_path:
-            saved = save_quotes_to_csv(quotes, csv_path)
+            saved = save_quotes_to_csv(clean_quotes, csv_path)
         elif fmt == "sqlite" and db_path:
-            saved = save_quotes_to_db(quotes, db_path)
+            saved = save_quotes_to_db(clean_quotes, db_path)
         else:
             logging.warning(f"Unknown format or missing path: {fmt}")
             saved = 0

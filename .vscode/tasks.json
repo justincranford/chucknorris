@@ -8,6 +8,20 @@
 			"args": [],
 			"isBackground": false,
 			"group": "test"
+		},
+		{
+			"label": "Create profanity_filter.py",
+			"type": "shell",
+			"command": "echo \"\" > scraper/profanity_filter.py",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Install better-profanity, profanityfilter, profane-detector",
+			"type": "shell",
+			"command": "pip install better-profanity profanityfilter profane-detector",
+			"isBackground": false,
+			"group": "build"
 		}
 	]
 }

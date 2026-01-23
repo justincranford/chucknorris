@@ -1,6 +1,6 @@
 """Tests for the URL validator module."""
 
-import pytest
+...existing code...
 
 from scraper.validator import (
     is_chuck_norris_source,
